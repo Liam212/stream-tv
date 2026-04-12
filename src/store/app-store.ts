@@ -14,15 +14,10 @@ type AppStore = {
   streamUrl: string
   activeUrl: string
   activeTitle: string
-  showVideoDebug: boolean
-  sidebarCollapsed: boolean
   xtreamProfile: XtreamProfile
   connectedProfile: XtreamProfile | null
   connectionStatus: string
   setStreamUrl: (value: string) => void
-  setSidebarCollapsed: (value: boolean) => void
-  toggleSidebar: () => void
-  toggleVideoDebug: (value: boolean) => void
   setXtreamProfile: (
     updater: XtreamProfile | ((current: XtreamProfile) => XtreamProfile),
   ) => void
@@ -49,17 +44,10 @@ export const useAppStore = create<AppStore>()(
       streamUrl: DEFAULT_STREAM_URL,
       activeUrl: DEFAULT_STREAM_URL,
       activeTitle: 'Mux sample stream',
-      showVideoDebug: false,
-      sidebarCollapsed: false,
       xtreamProfile: defaultXtreamProfile,
       connectedProfile: null,
       connectionStatus: 'Not connected',
       setStreamUrl: value => set({ streamUrl: value }),
-      setSidebarCollapsed: value => set({ sidebarCollapsed: value }),
-      toggleSidebar: () => {
-        const { sidebarCollapsed } = get()
-        set({ sidebarCollapsed: !sidebarCollapsed })
-      },
       setXtreamProfile: updater => {
         set(state => ({
           xtreamProfile:
@@ -67,10 +55,6 @@ export const useAppStore = create<AppStore>()(
               ? updater(state.xtreamProfile)
               : updater,
         }))
-      },
-      toggleVideoDebug: () => {
-        const { showVideoDebug } = get()
-        set({ showVideoDebug: !showVideoDebug })
       },
       setConnectionStatus: value => set({ connectionStatus: value }),
       connectXtreamProfile: (profile, status = 'Connected') => {
@@ -135,7 +119,6 @@ export const useAppStore = create<AppStore>()(
       storage: createJSONStorage(() => window.localStorage),
       partialize: state => ({
         streamUrl: state.streamUrl,
-        sidebarCollapsed: state.sidebarCollapsed,
         xtreamProfile: state.xtreamProfile,
       }),
     },

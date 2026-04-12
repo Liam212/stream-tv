@@ -7,42 +7,28 @@ import {
   useRouterState,
 } from '@tanstack/react-router'
 import type { QueryClient } from '@tanstack/react-query'
+import { Grid2x2, Play, SettingsIcon, Tv } from 'lucide-react'
+import { PlayerSurface } from './components/player-surface'
+import { MultiViewPage } from '@/routes/multi-view-page'
 import { PlayerPage } from '@/routes/player-page'
 import { SettingsPage } from '@/routes/settings-page'
 import { TvGuidePage } from '@/routes/tv-guide-page'
 import { XtreamPage } from '@/routes/xtream-page'
-import { useAppStore } from '@/store/app-store'
-import { PlayerSurface } from './components/player-surface'
-import { ChevronLeft, ChevronRight, Play, SettingsIcon, Tv } from 'lucide-react'
 
 type RouterContext = {
   queryClient: QueryClient
 }
 
 function AppLayout() {
-  const sidebarCollapsed = useAppStore(state => state.sidebarCollapsed)
-  const toggleSidebar = useAppStore(state => state.toggleSidebar)
   const pathname = useRouterState({
     select: state => state.location.pathname,
   })
-  const isSettingsRoute = pathname === '/settings'
+  const hideShellPlayer =
+    pathname === '/settings' || pathname === '/multiview'
 
   return (
-    <main className={`shell${sidebarCollapsed ? ' shell-collapsed' : ''}`}>
-      <aside className={`sidebar${sidebarCollapsed ? ' is-collapsed' : ''}`}>
-        <button
-          type="button"
-          className="sidebar-toggle"
-          onClick={toggleSidebar}
-          aria-expanded={!sidebarCollapsed}
-          aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
-          {sidebarCollapsed ? (
-            <ChevronRight color="black" />
-          ) : (
-            <ChevronLeft color="black" />
-          )}
-        </button>
-
+    <main className="shell">
+      <aside className="sidebar">
         <nav className="side-nav">
           <Link
             to="/"
@@ -50,7 +36,7 @@ function AppLayout() {
             activeProps={{ className: 'nav-link active' }}
             aria-label="Direct Play"
             title="Direct Play">
-            {sidebarCollapsed ? <Play /> : 'Direct Play'}
+            <Play className="nav-icon" />
           </Link>
           <Link
             to="/guide"
@@ -58,7 +44,15 @@ function AppLayout() {
             activeProps={{ className: 'nav-link active' }}
             aria-label="TV Guide"
             title="TV Guide">
-            {sidebarCollapsed ? <Tv /> : 'TV Guide'}
+            <Tv className="nav-icon" />
+          </Link>
+          <Link
+            to="/multiview"
+            className="nav-link"
+            activeProps={{ className: 'nav-link active' }}
+            aria-label="Multi View"
+            title="Multi View">
+            <Grid2x2 className="nav-icon" />
           </Link>
           <Link
             to="/settings"
@@ -66,13 +60,13 @@ function AppLayout() {
             activeProps={{ className: 'nav-link active' }}
             aria-label="Settings"
             title="Settings">
-            {sidebarCollapsed ? <SettingsIcon /> : 'Settings'}
+            <SettingsIcon className="nav-icon" />
           </Link>
         </nav>
       </aside>
 
       <section className="content-shell">
-        <PlayerSurface hidden={isSettingsRoute} muted={isSettingsRoute} />
+        <PlayerSurface hidden={hideShellPlayer} muted={hideShellPlayer} />
         <Outlet />
       </section>
     </main>
@@ -93,6 +87,12 @@ const guideRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/guide',
   component: TvGuidePage,
+})
+
+const multiViewRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/multiview',
+  component: MultiViewPage,
 })
 
 const xtreamLiveRoute = createRoute({
@@ -122,6 +122,7 @@ const settingsRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   playerRoute,
   guideRoute,
+  multiViewRoute,
   xtreamLiveRoute,
   xtreamVodRoute,
   xtreamSeriesRoute,
