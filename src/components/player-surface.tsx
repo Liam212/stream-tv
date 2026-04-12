@@ -5,23 +5,46 @@ import { useAppStore } from '@/store/app-store'
 
 type MpegtsVideoElementLike = HTMLElement & {
   src: string
+  muted: boolean
   load: () => Promise<void> | void
   play: () => Promise<void>
   pause: () => void
   removeAttribute: (qualifiedName: string) => void
 }
 
-export function PlayerSurface() {
+type PlayerSurfaceProps = {
+  variant?: 'inline' | 'floating'
+  hidden?: boolean
+  muted?: boolean
+}
+
+export function PlayerSurface({
+  variant = 'inline',
+  hidden = false,
+  muted = false,
+}: PlayerSurfaceProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const mpegtsRef = useRef<MpegtsVideoElementLike | null>(null)
   const hlsRef = useRef<Hls | null>(null)
   const activeUrl = useAppStore(state => state.activeUrl)
   const activeTitle = useAppStore(state => state.activeTitle)
   const showVideoDebug = useAppStore(state => state.showVideoDebug)
+  const stopPlayback = useAppStore(state => state.stopPlayback)
   const [status, setStatus] = useState('Ready to load a stream')
   const [quality, setQuality] = useState('Auto')
   const [streamMode, setStreamMode] = useState('Native video')
   const sourceKind = getSourceKind(activeUrl)
+  const hasActivePlayback = activeUrl.trim().length > 0
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = muted
+    }
+
+    if (mpegtsRef.current) {
+      mpegtsRef.current.muted = muted
+    }
+  }, [muted, sourceKind, hasActivePlayback])
 
   useEffect(() => {
     const media = sourceKind === 'mpegts' ? mpegtsRef.current : videoRef.current
@@ -155,24 +178,46 @@ export function PlayerSurface() {
     }
   }, [activeUrl, sourceKind])
 
+  if (!hasActivePlayback) {
+    return null
+  }
+
   return (
-    <section>
-      {sourceKind === 'mpegts' ? (
-        <mpegts-video
-          ref={mpegtsRef}
-          className="player"
-          controls={true}
-          preload="auto"
-        />
-      ) : (
-        <video
-          ref={videoRef}
-          className="player"
-          controls
-          playsInline
-          preload="auto"
-        />
-      )}
+    <section
+      className={`${variant === 'floating' ? 'floating-player' : 'inline-player'}${hidden ? ' is-page-hidden' : ''}`}
+      aria-hidden={hidden}>
+      <div className="floating-player-bar">
+        <div>
+          <p className="floating-player-label">Now Playing</p>
+          <strong className="floating-player-title">
+            {activeTitle || 'Active stream'}
+          </strong>
+        </div>
+        <button type="button" className="close-player" onClick={stopPlayback}>
+          Close
+        </button>
+      </div>
+
+      <div className="player-frame">
+        {sourceKind === 'mpegts' ? (
+          <mpegts-video
+            ref={mpegtsRef}
+            className="player"
+            controls={true}
+            preload="auto"
+          />
+        ) : (
+          <video
+            ref={videoRef}
+            className="player"
+            controls
+            playsInline
+            preload="auto"
+            muted={muted}
+          />
+        )}
+      </div>
+
       {showVideoDebug && (
         <div className="meta-grid">
           <article className="meta-card">

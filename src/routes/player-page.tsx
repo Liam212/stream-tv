@@ -2,10 +2,9 @@ import { FormEvent } from 'react'
 import { useAppStore } from '@/store/app-store'
 
 export function PlayerPage() {
-  const streamUrl = useAppStore((state) => state.streamUrl)
-  const setStreamUrl = useAppStore((state) => state.setStreamUrl)
-  const loadManualUrl = useAppStore((state) => state.loadManualUrl)
-  const loadSample = useAppStore((state) => state.loadSample)
+  const streamUrl = useAppStore(state => state.streamUrl)
+  const setStreamUrl = useAppStore(state => state.setStreamUrl)
+  const loadManualUrl = useAppStore(state => state.loadManualUrl)
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -35,16 +34,16 @@ export function PlayerPage() {
 
         <div className="actions">
           <button type="submit">Load stream</button>
-          <button type="button" className="secondary" onClick={loadSample}>
-            Load sample
-          </button>
         </div>
       </form>
 
       <div className="info-grid">
         <article className="info-card">
           <strong>HLS</strong>
-          <p>`.m3u8` manifests use `hls.js` when Media Source Extensions are available.</p>
+          <p>
+            `.m3u8` manifests use `hls.js` when Media Source Extensions are
+            available.
+          </p>
         </article>
         <article className="info-card">
           <strong>MPEG-TS</strong>
@@ -52,7 +51,9 @@ export function PlayerPage() {
         </article>
         <article className="info-card">
           <strong>Fallback</strong>
-          <p>Other direct media URLs fall back to the native HTML media element.</p>
+          <p>
+            Other direct media URLs fall back to the native HTML media element.
+          </p>
         </article>
       </div>
     </section>

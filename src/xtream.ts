@@ -36,6 +36,16 @@ export type XtreamEpisode = {
   }
 }
 
+export type XtreamEpgEntry = {
+  id: string
+  title: string
+  description: string
+  start: string
+  end: string
+  startTimestamp?: number
+  endTimestamp?: number
+}
+
 export type XtreamAuthResponse = {
   user_info?: {
     auth?: number
@@ -144,6 +154,58 @@ export async function getXtreamSeriesInfo(profile: XtreamProfile, seriesId: numb
     action: 'get_series_info',
     series: String(seriesId),
   })
+}
+
+function decodeXtreamText(value: unknown) {
+  if (typeof value !== 'string' || !value.length) {
+    return ''
+  }
+
+  try {
+    return window.atob(value)
+  } catch {
+    return value
+  }
+}
+
+function mapEpgEntries(value: unknown): XtreamEpgEntry[] {
+  const rows = toArray<Record<string, unknown>>(value)
+
+  return rows.map((row) => ({
+    id: String(row.id ?? row.epg_id ?? `${row.start ?? ''}-${row.end ?? ''}`),
+    title: decodeXtreamText(row.title ?? row.programme_title ?? ''),
+    description: decodeXtreamText(row.description ?? row.plot ?? ''),
+    start: String(row.start ?? row.start_timestamp ?? ''),
+    end: String(row.end ?? row.stop ?? row.stop_timestamp ?? ''),
+    startTimestamp: row.start_timestamp ? Number(row.start_timestamp) : undefined,
+    endTimestamp: row.stop_timestamp ? Number(row.stop_timestamp) : undefined,
+  }))
+}
+
+export async function getXtreamShortEpg(
+  profile: XtreamProfile,
+  streamId: number,
+  limit = 12,
+) {
+  const response = await fetchJson<{ epg_listings?: unknown }>(profile, {
+    action: 'get_short_epg',
+    stream_id: String(streamId),
+    limit: String(limit),
+  })
+
+  return mapEpgEntries(response.epg_listings)
+}
+
+export async function getXtreamSimpleEpg(
+  profile: XtreamProfile,
+  streamId: number,
+) {
+  const response = await fetchJson<{ epg_listings?: unknown }>(profile, {
+    action: 'get_simple_data_table',
+    stream_id: String(streamId),
+  })
+
+  return mapEpgEntries(response.epg_listings)
 }
 
 export function getSeriesEpisodes(seriesInfo: XtreamSeriesInfo) {

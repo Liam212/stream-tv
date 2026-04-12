@@ -9,13 +9,6 @@ export function SettingsPage() {
 
   return (
     <section className="route-panel">
-      <div className="panel-header">
-        <div>
-          <p className="eyebrow">Settings</p>
-          <h2>Runtime Notes</h2>
-        </div>
-      </div>
-
       <div className="settings-grid">
         <XtreamSettingsForm />
 
@@ -37,7 +30,9 @@ export function SettingsPage() {
             <article className="info-card">
               <strong>Video Debug</strong>
               <p>{showVideoDebug ? 'Enabled' : 'Disabled'}</p>
-              <button onClick={() => toggleVideoDebug(!showVideoDebug)}>Toggle</button>
+              <button onClick={() => toggleVideoDebug(!showVideoDebug)}>
+                Toggle
+              </button>
             </article>
           </div>
         </section>
