@@ -20,8 +20,11 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.99.0",
+    "@tanstack/react-router": "^1.168.18",
     "hls.js": "^1.6.15",
-    "mpegts-video-element": "^0.2.3"
+    "mpegts-video-element": "^0.2.3",
+    "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@playwright/test": "^1.48.2",

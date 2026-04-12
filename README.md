@@ -8,7 +8,10 @@ Electron desktop player built from the `electron-vite-react` starter and adapted
 - Vite for development and builds
 - React for the renderer UI
 - HLS.js for `.m3u8` playback
+- Zustand for global state and persisted renderer settings
 - Xtream API login and library browsing for live, VOD, and series catalogs
+- TanStack Router for screen navigation
+- TanStack Query for Xtream data loading and caching
 
 ## Run
 
