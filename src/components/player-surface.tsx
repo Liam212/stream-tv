@@ -29,7 +29,6 @@ export function PlayerSurface({
   const activeUrl = useAppStore(state => state.activeUrl)
   const activeTitle = useAppStore(state => state.activeTitle)
   const showVideoDebug = useAppStore(state => state.showVideoDebug)
-  const stopPlayback = useAppStore(state => state.stopPlayback)
   const [status, setStatus] = useState('Ready to load a stream')
   const [quality, setQuality] = useState('Auto')
   const [streamMode, setStreamMode] = useState('Native video')
@@ -193,9 +192,6 @@ export function PlayerSurface({
             {activeTitle || 'Active stream'}
           </strong>
         </div>
-        <button type="button" className="close-player" onClick={stopPlayback}>
-          Close
-        </button>
       </div>
 
       <div className="player-frame">

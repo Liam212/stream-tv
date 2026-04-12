@@ -15,7 +15,6 @@ export function PlayerPage() {
     <section className="route-panel">
       <div className="panel-header">
         <div>
-          <p className="eyebrow">Player</p>
           <h2>Direct Playback</h2>
         </div>
       </div>

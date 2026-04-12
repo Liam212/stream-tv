@@ -13,7 +13,6 @@ export function SettingsPage() {
         <XtreamSettingsForm />
 
         <section className="control-panel">
-          <h3>Runtime Options</h3>
           <div className="info-grid stacked">
             <article className="info-card">
               <strong>Current provider</strong>

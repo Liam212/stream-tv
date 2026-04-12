@@ -13,6 +13,7 @@ import { TvGuidePage } from '@/routes/tv-guide-page'
 import { XtreamPage } from '@/routes/xtream-page'
 import { useAppStore } from '@/store/app-store'
 import { PlayerSurface } from './components/player-surface'
+import { ChevronLeft, ChevronRight, Play, SettingsIcon, Tv } from 'lucide-react'
 
 type RouterContext = {
   queryClient: QueryClient
@@ -35,7 +36,11 @@ function AppLayout() {
           onClick={toggleSidebar}
           aria-expanded={!sidebarCollapsed}
           aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
-          {sidebarCollapsed ? '>' : '<'}
+          {sidebarCollapsed ? (
+            <ChevronRight color="black" />
+          ) : (
+            <ChevronLeft color="black" />
+          )}
         </button>
 
         <nav className="side-nav">
@@ -45,7 +50,7 @@ function AppLayout() {
             activeProps={{ className: 'nav-link active' }}
             aria-label="Direct Play"
             title="Direct Play">
-            {sidebarCollapsed ? 'DP' : 'Direct Play'}
+            {sidebarCollapsed ? <Play /> : 'Direct Play'}
           </Link>
           <Link
             to="/guide"
@@ -53,7 +58,7 @@ function AppLayout() {
             activeProps={{ className: 'nav-link active' }}
             aria-label="TV Guide"
             title="TV Guide">
-            {sidebarCollapsed ? 'TV' : 'TV Guide'}
+            {sidebarCollapsed ? <Tv /> : 'TV Guide'}
           </Link>
           <Link
             to="/settings"
@@ -61,7 +66,7 @@ function AppLayout() {
             activeProps={{ className: 'nav-link active' }}
             aria-label="Settings"
             title="Settings">
-            {sidebarCollapsed ? 'ST' : 'Settings'}
+            {sidebarCollapsed ? <SettingsIcon /> : 'Settings'}
           </Link>
         </nav>
       </aside>

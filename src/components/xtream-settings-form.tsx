@@ -22,14 +22,18 @@ export function XtreamSettingsForm() {
     onMutate: () => {
       setConnectionStatus('Connecting to Xtream provider')
     },
-    onSuccess: (auth) => {
+    onSuccess: auth => {
       connectXtreamProfile(
         xtreamProfile,
-        auth.user_info?.status ? `Connected (${auth.user_info.status})` : 'Connected',
+        auth.user_info?.status
+          ? `Connected (${auth.user_info.status})`
+          : 'Connected',
       )
     },
-    onError: (error) => {
-      setConnectionStatus(error instanceof Error ? error.message : 'Unable to connect')
+    onError: error => {
+      setConnectionStatus(
+        error instanceof Error ? error.message : 'Unable to connect',
+      )
     },
   })
 
@@ -40,7 +44,7 @@ export function XtreamSettingsForm() {
 
   return (
     <section className="control-panel">
-      <h3>Xtream Provider Access</h3>
+      <h3>Xtream Connection</h3>
       <form className="stream-form" onSubmit={handleConnect}>
         <label className="field">
           <span className="field-label">Server URL</span>
@@ -48,7 +52,10 @@ export function XtreamSettingsForm() {
             type="url"
             value={xtreamProfile.baseUrl}
             onChange={event =>
-              setXtreamProfile(current => ({ ...current, baseUrl: event.target.value }))
+              setXtreamProfile(current => ({
+                ...current,
+                baseUrl: event.target.value,
+              }))
             }
             placeholder="http://provider.example:8080"
           />
@@ -60,7 +67,10 @@ export function XtreamSettingsForm() {
             type="text"
             value={xtreamProfile.username}
             onChange={event =>
-              setXtreamProfile(current => ({ ...current, username: event.target.value }))
+              setXtreamProfile(current => ({
+                ...current,
+                username: event.target.value,
+              }))
             }
             placeholder="subscriber username"
           />
@@ -72,7 +82,10 @@ export function XtreamSettingsForm() {
             type="password"
             value={xtreamProfile.password}
             onChange={event =>
-              setXtreamProfile(current => ({ ...current, password: event.target.value }))
+              setXtreamProfile(current => ({
+                ...current,
+                password: event.target.value,
+              }))
             }
             placeholder="subscriber password"
           />
@@ -95,9 +108,12 @@ export function XtreamSettingsForm() {
 
         <div className="actions">
           <button type="submit" disabled={connectMutation.isPending}>
-            {connectMutation.isPending ? 'Connecting...' : 'Connect provider'}
+            {connectMutation.isPending ? 'Connecting...' : 'Connect'}
           </button>
-          <button type="button" className="secondary" onClick={disconnectXtream}>
+          <button
+            type="button"
+            className="secondary"
+            onClick={disconnectXtream}>
             Disconnect
           </button>
         </div>
@@ -105,7 +121,10 @@ export function XtreamSettingsForm() {
 
       <div className="notes">
         <p>{connectionStatus}</p>
-        <p>Settings persist in local storage. Credentials are still plain-text in the renderer.</p>
+        <p>
+          Settings persist in local storage. Credentials are still plain-text in
+          the renderer.
+        </p>
       </div>
     </section>
   )

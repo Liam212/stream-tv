@@ -31,13 +31,13 @@
 }
 
 .sidebar-toggle {
-  justify-self: start;
-  min-width: auto;
   width: 44px;
   height: 44px;
-  padding: 0;
-  font-size: 1.1rem;
-  font-weight: 800;
+  justify-self: flex-end;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .sidebar.is-collapsed .sidebar-toggle {
@@ -121,12 +121,6 @@
 .floating-player-title {
   display: block;
 }
-
-.close-player {
-  min-width: auto;
-  padding-inline: 16px;
-}
-
 .player-panel,
 .route-panel,
 .control-panel {
