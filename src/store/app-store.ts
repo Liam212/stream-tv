@@ -8,7 +8,7 @@ import {
   type XtreamStream,
 } from '@/xtream'
 
-const DEFAULT_STREAM_URL = 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8'
+const DEFAULT_STREAM_URL = ''
 
 type AppStore = {
   streamUrl: string

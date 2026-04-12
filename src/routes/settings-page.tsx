@@ -1,3 +1,4 @@
+import { XtreamSettingsForm } from '@/components/xtream-settings-form'
 import { useAppStore } from '@/store/app-store'
 
 export function SettingsPage() {
@@ -15,24 +16,31 @@ export function SettingsPage() {
         </div>
       </div>
 
-      <div className="info-grid">
-        <article className="info-card">
-          <strong>Current provider</strong>
-          <p>
-            {connectedProfile
-              ? connectedProfile.baseUrl
-              : 'No Xtream provider connected'}
-          </p>
-        </article>
-        <article className="info-card">
-          <strong>Connection state</strong>
-          <p>{connectionStatus}</p>
-        </article>
-        <article className="info-card">
-          <strong>Video Debug</strong>
-          <p>{showVideoDebug ? 'Enabled' : 'Disabled'}</p>
-          <button onClick={toggleVideoDebug}>Toggle</button>
-        </article>
+      <div className="settings-grid">
+        <XtreamSettingsForm />
+
+        <section className="control-panel">
+          <h3>Runtime Options</h3>
+          <div className="info-grid stacked">
+            <article className="info-card">
+              <strong>Current provider</strong>
+              <p>
+                {connectedProfile
+                  ? connectedProfile.baseUrl
+                  : 'No Xtream provider connected'}
+              </p>
+            </article>
+            <article className="info-card">
+              <strong>Connection state</strong>
+              <p>{connectionStatus}</p>
+            </article>
+            <article className="info-card">
+              <strong>Video Debug</strong>
+              <p>{showVideoDebug ? 'Enabled' : 'Disabled'}</p>
+              <button onClick={() => toggleVideoDebug(!showVideoDebug)}>Toggle</button>
+            </article>
+          </div>
+        </section>
       </div>
     </section>
   )
