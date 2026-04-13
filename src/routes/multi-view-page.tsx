@@ -16,6 +16,8 @@ type MultiViewSlot = {
   url: string
 }
 
+type PickerMode = 'search' | 'direct'
+
 function getProfileKey(
   profile: ReturnType<typeof useAppStore.getState>['connectedProfile'],
 ) {
@@ -44,7 +46,10 @@ function normalizeSlots(slots: MultiViewSlot[]) {
 export function MultiViewPage() {
   const connectedProfile = useAppStore(state => state.connectedProfile)
   const [pickerSlotId, setPickerSlotId] = useState<number | null>(null)
+  const [pickerMode, setPickerMode] = useState<PickerMode>('search')
   const [searchTerm, setSearchTerm] = useState('')
+  const [directUrl, setDirectUrl] = useState('')
+  const [directTitle, setDirectTitle] = useState('')
   const [slots, setSlots] = useState<MultiViewSlot[]>(() => createEmptySlots(2))
   const connectedProfileKey = useMemo(
     () => getProfileKey(connectedProfile),
@@ -53,11 +58,12 @@ export function MultiViewPage() {
 
   useEffect(() => {
     if (!connectedProfile) {
-      setSlots(createEmptySlots(2))
-      setPickerSlotId(null)
       setSearchTerm('')
+      if (pickerMode === 'search') {
+        setPickerMode('direct')
+      }
     }
-  }, [connectedProfile])
+  }, [connectedProfile, pickerMode])
 
   const channelsQuery = useQuery({
     queryKey: ['multiview', 'channels', connectedProfileKey],
@@ -100,6 +106,36 @@ export function MultiViewPage() {
 
     setPickerSlotId(null)
     setSearchTerm('')
+    setDirectUrl('')
+    setDirectTitle('')
+  }
+
+  const assignDirectStreamToSlot = () => {
+    if (!pickerSlotId) {
+      return
+    }
+
+    const url = directUrl.trim()
+    if (!url) {
+      return
+    }
+
+    setSlots(current =>
+      current.map(slot =>
+        slot.id === pickerSlotId
+          ? {
+              ...slot,
+              title: directTitle.trim() || 'Direct stream',
+              url,
+            }
+          : slot,
+      ),
+    )
+
+    setPickerSlotId(null)
+    setDirectUrl('')
+    setDirectTitle('')
+    setSearchTerm('')
   }
 
   const clearSlot = (slotId: number) => {
@@ -119,12 +155,15 @@ export function MultiViewPage() {
       return nextSlots
     })
     setSearchTerm('')
+    setDirectUrl('')
+    setDirectTitle('')
   }
 
   const addSlot = () => {
     setSlots(current => {
       const nextId = (current.at(-1)?.id ?? 0) + 1
       setPickerSlotId(nextId)
+      setPickerMode(connectedProfile ? 'search' : 'direct')
       return [
         ...current,
         {
@@ -135,6 +174,8 @@ export function MultiViewPage() {
       ]
     })
     setSearchTerm('')
+    setDirectUrl('')
+    setDirectTitle('')
   }
 
   return (
@@ -149,7 +190,7 @@ export function MultiViewPage() {
       {!connectedProfile && (
         <section className="control-panel route-hint">
           <p className="empty-state">
-            No provider is connected. Open{' '}
+            No Xtream provider is connected. Search is unavailable, but direct streams still work. Open{' '}
             <Link to="/settings" className="inline-link">
               Settings
             </Link>{' '}
@@ -158,10 +199,27 @@ export function MultiViewPage() {
         </section>
       )}
 
-      {connectedProfile && (
-        <>
-          {pickerSlotId && (
-            <section className="multi-view-search-panel">
+      <>
+        {pickerSlotId && (
+          <section className="multi-view-search-panel">
+            <div className="multi-view-picker-actions">
+              <button
+                type="button"
+                className={pickerMode === 'search' ? 'tab active' : 'tab'}
+                onClick={() => setPickerMode('search')}
+                disabled={!connectedProfile}>
+                Search
+              </button>
+              <button
+                type="button"
+                className={pickerMode === 'direct' ? 'tab active' : 'tab'}
+                onClick={() => setPickerMode('direct')}>
+                Direct play
+              </button>
+            </div>
+
+            {pickerMode === 'search' ? (
+              <>
               <label className="multi-view-search-input">
                 <Search size={16} />
                 <input
@@ -174,6 +232,12 @@ export function MultiViewPage() {
               </label>
 
               <div className="multi-view-search-results">
+                {!connectedProfile && (
+                  <p className="empty-state">
+                    Connect Xtream in Settings to search channels here.
+                  </p>
+                )}
+
                 {channelsQuery.isLoading && (
                   <p className="empty-state">Loading Xtream live channels...</p>
                 )}
@@ -210,43 +274,79 @@ export function MultiViewPage() {
                   </button>
                 ))}
               </div>
-            </section>
-          )}
-
-          <section className="multi-view-grid">
-            {slots.map(slot => (
-              <article
-                key={slot.id}
-                className={`multi-view-slot${pickerSlotId === slot.id ? ' is-picker' : ''}`}>
-                <button
-                  type="button"
-                  className="multi-view-slot-add"
-                  onClick={() => setPickerSlotId(slot.id)}
-                  aria-label={
-                    slot.url
-                      ? `Replace channel in slot ${slot.id}`
-                      : `Add channel to slot ${slot.id}`
-                  }>
-                  <Plus size={22} />
-                </button>
-
-                {slot.url ? (
-                  <MediaPlayer
-                    url={slot.url}
-                    title={slot.title}
-                    variant="tile"
-                    onClose={() => clearSlot(slot.id)}
+              </>
+            ) : (
+              <div className="multi-view-direct-panel">
+                <label className="field">
+                  <span className="field-label">Stream URL</span>
+                  <input
+                    type="url"
+                    value={directUrl}
+                    onChange={event => setDirectUrl(event.target.value)}
+                    placeholder="https://example.com/live/stream.m3u8"
+                    autoFocus
                   />
-                ) : (
-                  <div className="multi-view-slot-empty">
-                    <span>Slot {slot.id}</span>
-                  </div>
-                )}
-              </article>
-            ))}
+                </label>
+
+                <label className="field">
+                  <span className="field-label">Title</span>
+                  <input
+                    type="text"
+                    value={directTitle}
+                    onChange={event => setDirectTitle(event.target.value)}
+                    placeholder="Optional channel title"
+                  />
+                </label>
+
+                <div className="actions">
+                  <button
+                    type="button"
+                    disabled={!directUrl.trim()}
+                    onClick={assignDirectStreamToSlot}>
+                    Add stream
+                  </button>
+                </div>
+              </div>
+            )}
           </section>
-        </>
-      )}
+        )}
+
+        <section className="multi-view-grid">
+          {slots.map(slot => (
+            <article
+              key={slot.id}
+              className={`multi-view-slot${pickerSlotId === slot.id ? ' is-picker' : ''}`}>
+              <button
+                type="button"
+                className="multi-view-slot-add"
+                onClick={() => {
+                  setPickerSlotId(slot.id)
+                  setPickerMode(connectedProfile ? 'search' : 'direct')
+                }}
+                aria-label={
+                  slot.url
+                    ? `Replace channel in slot ${slot.id}`
+                    : `Add channel to slot ${slot.id}`
+                }>
+                <Plus size={22} />
+              </button>
+
+              {slot.url ? (
+                <MediaPlayer
+                  url={slot.url}
+                  title={slot.title}
+                  variant="tile"
+                  onClose={() => clearSlot(slot.id)}
+                />
+              ) : (
+                <div className="multi-view-slot-empty">
+                  <span>Slot {slot.id}</span>
+                </div>
+              )}
+            </article>
+          ))}
+        </section>
+      </>
     </section>
   )
 }
