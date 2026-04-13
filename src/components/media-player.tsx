@@ -29,6 +29,9 @@ type MediaPlayerProps = {
   variant?: 'inline' | 'floating' | 'tile'
   hidden?: boolean
   muted?: boolean
+  preferredVolume?: number
+  preferredMuted?: boolean
+  onAudioStateChange?: (state: { volume: number; muted: boolean }) => void
   onClose?: () => void
 }
 
@@ -38,6 +41,9 @@ export function MediaPlayer({
   variant = 'inline',
   hidden = false,
   muted = false,
+  preferredVolume = 1,
+  preferredMuted = false,
+  onAudioStateChange,
   onClose,
 }: MediaPlayerProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null)
@@ -53,6 +59,7 @@ export function MediaPlayer({
   const [isFullscreen, setIsFullscreen] = useState(false)
   const sourceKind = getSourceKind(url)
   const hasActivePlayback = url.trim().length > 0
+  const normalizedPreferredVolume = Math.max(0, Math.min(1, preferredVolume))
 
   const getMediaElement = () =>
     sourceKind === 'mpegts' ? mpegtsRef.current : videoRef.current
@@ -63,9 +70,17 @@ export function MediaPlayer({
       return
     }
 
-    media.muted = muted
+    media.volume = normalizedPreferredVolume
+    media.muted = muted || preferredMuted
+    setVolume(media.volume)
     setIsMuted(media.muted)
-  }, [muted, sourceKind, hasActivePlayback])
+  }, [
+    muted,
+    preferredMuted,
+    normalizedPreferredVolume,
+    sourceKind,
+    hasActivePlayback,
+  ])
 
   useEffect(() => {
     const media = getMediaElement()
@@ -76,9 +91,19 @@ export function MediaPlayer({
     }
 
     const syncPlaybackState = () => {
+      const nextVolume = media.volume
+      const nextMuted = muted ? true : media.muted || nextVolume === 0
+
       setIsPlaying(!media.paused)
-      setIsMuted(media.muted || media.volume === 0)
-      setVolume(media.volume)
+      setIsMuted(nextMuted)
+      setVolume(nextVolume)
+
+      if (!muted) {
+        onAudioStateChange?.({
+          volume: nextVolume,
+          muted: nextMuted,
+        })
+      }
     }
 
     syncPlaybackState()
@@ -94,7 +119,7 @@ export function MediaPlayer({
       media.removeEventListener('pause', syncPlaybackState)
       media.removeEventListener('volumechange', syncPlaybackState)
     }
-  }, [url, muted, sourceKind, hasActivePlayback])
+  }, [url, muted, sourceKind, hasActivePlayback, onAudioStateChange])
 
   useEffect(() => {
     const syncFullscreenState = () => {

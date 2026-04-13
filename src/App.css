@@ -199,10 +199,16 @@
 
 .multi-view-toolbar {
   display: flex;
-  align-items: end;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: flex-start;
   gap: 16px;
   padding: 0 0 10px;
+}
+
+.multi-view-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .multi-view-search-panel {
@@ -263,15 +269,122 @@
 }
 
 .multi-view-grid {
+  position: relative;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1px;
-  align-content: start;
   background: rgba(148, 163, 184, 0.12);
 }
 
-.multi-view-grid.is-nine-up {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+.multi-view-grid.layout-quad-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.multi-view-grid.layout-duo {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.multi-view-grid.layout-focus-corners {
+  min-height: 72vh;
+  background: #000;
+}
+
+.multi-view-grid.layout-focus-corners .multi-view-slot.slot-main {
+  position: absolute;
+  inset: 0;
+  min-height: 0;
+}
+
+.multi-view-grid.layout-focus-corners .multi-view-slot.slot-corner {
+  position: absolute;
+  z-index: 2;
+  width: min(18vw, 220px);
+  min-height: 124px;
+  aspect-ratio: 16 / 9;
+}
+
+.multi-view-grid.layout-focus-corners .multi-view-slot.slot-top-left {
+  top: 14px;
+  left: 14px;
+}
+
+.multi-view-grid.layout-focus-corners .multi-view-slot.slot-top-right {
+  top: 14px;
+  right: 14px;
+}
+
+.multi-view-grid.layout-focus-corners .multi-view-slot.slot-bottom-left {
+  bottom: 14px;
+  left: 14px;
+}
+
+.multi-view-grid.layout-focus-corners .multi-view-slot.slot-bottom-right {
+  right: 14px;
+  bottom: 14px;
+}
+
+.multi-view-grid.layout-focus-corners .multi-view-slot.slot-main .multi-player .player {
+  min-height: 72vh;
+}
+
+.multi-view-grid.layout-focus-corners .multi-view-slot.slot-main .multi-view-slot-empty {
+  min-height: 72vh;
+}
+
+.multi-view-grid.layout-focus-corners .multi-view-slot.slot-corner .multi-player .player,
+.multi-view-grid.layout-focus-corners .multi-view-slot.slot-corner .multi-view-slot-empty {
+  min-height: 124px;
+}
+
+.multi-view-grid.layout-quad-grid,
+.multi-view-grid.layout-duo {
+  align-content: start;
+}
+
+.multi-view-grid.layout-quad-grid .multi-view-slot,
+.multi-view-grid.layout-duo .multi-view-slot {
+  min-height: 280px;
+}
+
+.multi-view-grid.layout-duo .multi-view-slot {
+  min-height: 420px;
+}
+
+.multi-view-grid.layout-quad-grid .multi-view-slot {
+  min-height: 280px;
+}
+
+.multi-view-grid.layout-focus-corners .multi-view-slot.slot-main .multi-view-slot-add {
+  top: 14px;
+  left: 14px;
+}
+
+.multi-view-grid.layout-focus-corners .multi-view-slot.slot-corner .multi-view-slot-add {
+  top: 8px;
+  left: 8px;
+}
+
+.multi-view-grid.layout-focus-corners .multi-view-slot.slot-corner .player-overlay {
+  padding: 8px;
+}
+
+.multi-view-grid.layout-focus-corners .multi-view-slot.slot-corner .player-overlay-meta,
+.multi-view-grid.layout-focus-corners .multi-view-slot.slot-corner .player-volume,
+.multi-view-grid.layout-focus-corners .multi-view-slot.slot-corner .player-control:not(.player-close),
+.multi-view-grid.layout-focus-corners .multi-view-slot.slot-corner .player-control-primary {
+  display: none;
+}
+
+.multi-view-grid.layout-focus-corners .multi-view-slot.slot-corner .floating-player-label {
+  font-size: 0.66rem;
+}
+
+.multi-view-grid.layout-focus-corners .multi-view-slot.slot-corner .floating-player-title {
+  font-size: 0.82rem;
+}
+
+.multi-view-grid.layout-quad-grid .multi-view-slot,
+.multi-view-grid.layout-duo .multi-view-slot {
+  position: relative;
 }
 
 .multi-view-slot {
@@ -279,10 +392,6 @@
   min-height: 280px;
   background: #020617;
   overflow: hidden;
-}
-
-.multi-view-grid.is-nine-up .multi-view-slot {
-  min-height: 220px;
 }
 
 .multi-view-slot.is-picker {
@@ -787,8 +896,8 @@
     align-items: stretch;
   }
 
-  .multi-view-grid,
-  .multi-view-grid.is-nine-up {
+  .multi-view-grid.layout-quad-grid,
+  .multi-view-grid.layout-duo {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -831,12 +940,38 @@
   }
 
   .panel-header,
-  .multi-view-grid,
-  .multi-view-grid.is-nine-up {
+  .multi-view-grid.layout-quad-grid,
+  .multi-view-grid.layout-duo {
     grid-template-columns: 1fr;
   }
 
   .multi-view-slot {
+    min-height: 240px;
+  }
+
+  .multi-view-grid.layout-focus-corners {
+    min-height: 0;
+    grid-template-columns: 1fr;
+    background: rgba(148, 163, 184, 0.12);
+  }
+
+  .multi-view-grid.layout-focus-corners .multi-view-slot.slot-main,
+  .multi-view-grid.layout-focus-corners .multi-view-slot.slot-corner {
+    position: relative;
+    inset: auto;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    top: auto;
+    width: auto;
+    min-height: 240px;
+    aspect-ratio: auto;
+  }
+
+  .multi-view-grid.layout-focus-corners .multi-view-slot.slot-main .multi-player .player,
+  .multi-view-grid.layout-focus-corners .multi-view-slot.slot-main .multi-view-slot-empty,
+  .multi-view-grid.layout-focus-corners .multi-view-slot.slot-corner .multi-player .player,
+  .multi-view-grid.layout-focus-corners .multi-view-slot.slot-corner .multi-view-slot-empty {
     min-height: 240px;
   }
 
