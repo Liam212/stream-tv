@@ -1,0 +1,67 @@
+name: Build Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Git tag to release, for example v1.2.0'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Read package version
+        id: package
+        shell: pwsh
+        run: |
+          $version = node -p "require('./package.json').version"
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build desktop app
+        run: npm run build
+
+      - name: Upload build artifacts to workflow
+        uses: actions/upload-artifact@v4
+        with:
+          name: stream-tv-windows-${{ steps.package.outputs.version }}
+          path: |
+            release/${{ steps.package.outputs.version }}/Stream TV_${{ steps.package.outputs.version }}.exe
+            release/${{ steps.package.outputs.version }}/Stream TV_${{ steps.package.outputs.version }}.exe.blockmap
+            release/${{ steps.package.outputs.version }}/win-unpacked/**
+          if-no-files-found: error
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.tag_name || github.ref_name }}
+          generate_release_notes: true
+          files: |
+            release/${{ steps.package.outputs.version }}/Stream TV_${{ steps.package.outputs.version }}.exe
+            release/${{ steps.package.outputs.version }}/Stream TV_${{ steps.package.outputs.version }}.exe.blockmap
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
