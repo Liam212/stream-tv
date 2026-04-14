@@ -10,6 +10,8 @@ import {
   type XtreamEpgEntry,
   type XtreamStream,
 } from '@/xtream'
+import RouteLayout from '@/components/ui/layout'
+import { Card, CardDescription } from '@/components/ui/card'
 
 const ALL_GROUPS_ID = 'all'
 
@@ -114,121 +116,133 @@ export function TvGuidePage() {
   }))
 
   return (
-    <section className="route-panel">
+    <RouteLayout>
       {!connectedProfile && (
-        <section className="control-panel route-hint">
-          <p className="empty-state">
+        <Card className="bg-gray-900 p-4">
+          <CardDescription className="text-white">
             No provider is connected. Open{' '}
             <Link to="/settings" className="inline-link">
               Settings
             </Link>{' '}
             to configure Xtream access.
-          </p>
-        </section>
+          </CardDescription>
+        </Card>
       )}
 
-      <section className="control-panel guide-filter-panel">
-        <div className="guide-pill-row">
-          {groups.map(group => (
-            <button
-              key={group.category_id}
-              type="button"
-              className={
-                group.category_id === selectedCategoryId ? 'tab active' : 'tab'
-              }
-              onClick={() => setSelectedCategoryId(group.category_id)}>
-              {group.category_name}
-            </button>
-          ))}
-        </div>
-      </section>
+      {connectedProfile && (
+        <>
+          <section className="control-panel guide-filter-panel">
+            <div className="guide-pill-row">
+              {groups.map(group => (
+                <button
+                  key={group.category_id}
+                  type="button"
+                  className={
+                    group.category_id === selectedCategoryId
+                      ? 'tab active'
+                      : 'tab'
+                  }
+                  onClick={() => setSelectedCategoryId(group.category_id)}>
+                  {group.category_name}
+                </button>
+              ))}
+            </div>
+          </section>
 
-      <section className="control-panel guide-table-panel">
-        <div className="guide-table-header">
-          <div className="guide-table-channel-head">Channel</div>
-          <div className="guide-table-program-head">Programmes</div>
-        </div>
+          <section className="control-panel guide-table-panel">
+            <div className="guide-table-header">
+              <div className="guide-table-channel-head">Channel</div>
+              <div className="guide-table-program-head">Programmes</div>
+            </div>
 
-        <div className="guide-table">
-          {channelsQuery.isLoading && (
-            <p className="empty-state">Loading live channels and EPG data...</p>
-          )}
+            <div className="guide-table">
+              {channelsQuery.isLoading && (
+                <p className="empty-state">
+                  Loading live channels and EPG data...
+                </p>
+              )}
 
-          {channelsQuery.isError && (
-            <p className="empty-state">
-              {channelsQuery.error instanceof Error
-                ? channelsQuery.error.message
-                : 'Failed to load channels'}
-            </p>
-          )}
+              {channelsQuery.isError && (
+                <p className="empty-state">
+                  {channelsQuery.error instanceof Error
+                    ? channelsQuery.error.message
+                    : 'Failed to load channels'}
+                </p>
+              )}
 
-          {guideRows.map(({ channel, epg, isLoading, isError }) => (
-            <article
-              key={`${channel.stream_id ?? channel.name}`}
-              className="guide-table-row">
-              <button
-                type="button"
-                className="guide-table-channel"
-                onClick={() => playXtreamStream('live', channel)}>
-                <div className="guide-table-logo">
-                  {channel.stream_icon ? (
-                    <img
-                      className="channel-logo"
-                      src={channel.stream_icon}
-                      alt={channel.name ?? channel.title ?? 'Channel logo'}
-                    />
-                  ) : (
-                    <div className="channel-logo-fallback">
-                      {(channel.name ?? channel.title ?? '?')
-                        .slice(0, 2)
-                        .toUpperCase()}
+              {guideRows.map(({ channel, epg, isLoading, isError }) => (
+                <article
+                  key={`${channel.stream_id ?? channel.name}`}
+                  className="guide-table-row">
+                  <button
+                    type="button"
+                    className="guide-table-channel"
+                    onClick={() => playXtreamStream('live', channel)}>
+                    <div className="guide-table-logo">
+                      {channel.stream_icon ? (
+                        <img
+                          className="channel-logo"
+                          src={channel.stream_icon}
+                          alt={channel.name ?? channel.title ?? 'Channel logo'}
+                        />
+                      ) : (
+                        <div className="channel-logo-fallback">
+                          {(channel.name ?? channel.title ?? '?')
+                            .slice(0, 2)
+                            .toUpperCase()}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                <div className="guide-table-channel-copy">
-                  <strong>{channel.name ?? channel.title ?? 'Untitled'}</strong>
-                </div>
-              </button>
+                    <div className="guide-table-channel-copy">
+                      <strong>
+                        {channel.name ?? channel.title ?? 'Untitled'}
+                      </strong>
+                    </div>
+                  </button>
 
-              <div className="guide-table-programmes">
-                {isLoading && <p className="empty-state">Loading guide...</p>}
-                {isError && !isLoading && (
-                  <p className="empty-state">
-                    EPG unavailable for this channel.
-                  </p>
-                )}
+                  <div className="guide-table-programmes">
+                    {isLoading && (
+                      <p className="empty-state">Loading guide...</p>
+                    )}
+                    {isError && !isLoading && (
+                      <p className="empty-state">
+                        EPG unavailable for this channel.
+                      </p>
+                    )}
 
-                {!isLoading &&
-                  !isError &&
-                  epg.map((entry, index) => (
-                    <article
-                      key={entry.id}
-                      className={
-                        index === 0
-                          ? 'guide-program-card active'
-                          : 'guide-program-card'
-                      }>
-                      <span className="guide-program-time">
-                        {formatGuideTime(entry)}
-                      </span>
-                      <strong>{entry.title || 'Untitled programme'}</strong>
-                    </article>
-                  ))}
+                    {!isLoading &&
+                      !isError &&
+                      epg.map((entry, index) => (
+                        <article
+                          key={entry.id}
+                          className={
+                            index === 0
+                              ? 'guide-program-card active'
+                              : 'guide-program-card'
+                          }>
+                          <span className="guide-program-time">
+                            {formatGuideTime(entry)}
+                          </span>
+                          <strong>{entry.title || 'Untitled programme'}</strong>
+                        </article>
+                      ))}
 
-                {!isLoading && !isError && epg.length === 0 && (
-                  <p className="empty-state">No EPG</p>
-                )}
-              </div>
-            </article>
-          ))}
+                    {!isLoading && !isError && epg.length === 0 && (
+                      <p className="empty-state">No EPG</p>
+                    )}
+                  </div>
+                </article>
+              ))}
 
-          {!channelsQuery.isLoading && guideRows.length === 0 && (
-            <p className="empty-state">
-              No live channels were returned for this selection.
-            </p>
-          )}
-        </div>
-      </section>
-    </section>
+              {!channelsQuery.isLoading && guideRows.length === 0 && (
+                <p className="empty-state">
+                  No live channels were returned for this selection.
+                </p>
+              )}
+            </div>
+          </section>
+        </>
+      )}
+    </RouteLayout>
   )
 }

@@ -43,7 +43,7 @@ export function XtreamSettingsForm() {
   }
 
   return (
-    <section className="control-panel">
+    <section className="bg-gray-900 p-4 rounded-md text-gray-100">
       <h3>Xtream Connection</h3>
       <form className="stream-form" onSubmit={handleConnect}>
         <label className="field">

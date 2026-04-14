@@ -1,5 +1,13 @@
 import { FormEvent } from 'react'
 import { useAppStore } from '@/store/app-store'
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from '@/components/ui/card'
+import RouteLayout from '@/components/ui/layout'
 
 export function PlayerPage() {
   const streamUrl = useAppStore(state => state.streamUrl)
@@ -12,13 +20,7 @@ export function PlayerPage() {
   }
 
   return (
-    <section className="route-panel">
-      <div className="panel-header">
-        <div>
-          <h2>Direct Playback</h2>
-        </div>
-      </div>
-
+    <RouteLayout direction="column">
       <form className="stream-form" onSubmit={handleSubmit}>
         <label className="field">
           <span className="field-label">Stream URL</span>
@@ -36,25 +38,43 @@ export function PlayerPage() {
         </div>
       </form>
 
-      <div className="info-grid">
-        <article className="info-card">
-          <strong>HLS</strong>
-          <p>
-            `.m3u8` manifests use `hls.js` when Media Source Extensions are
-            available.
-          </p>
-        </article>
-        <article className="info-card">
-          <strong>MPEG-TS</strong>
-          <p>Direct `.ts` streams use `mpegts-video-element`.</p>
-        </article>
-        <article className="info-card">
-          <strong>Fallback</strong>
-          <p>
-            Other direct media URLs fall back to the native HTML media element.
-          </p>
-        </article>
+      <div className="flex items-center gap-2 mt-4">
+        <Card className="mt-6 bg-gray-700 text-gray-100">
+          <CardHeader>
+            <CardTitle>HLS</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CardDescription>
+              `.m3u8` manifests use `hls.js` when Media Source Extensions are
+              available.
+            </CardDescription>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6 bg-gray-700 text-gray-100">
+          <CardHeader>
+            <CardTitle>MPEG-TS</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CardDescription>
+              `.m3u8` manifests use `hls.js` when Media Source Extensions are
+              available.
+            </CardDescription>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6 bg-gray-700 text-gray-100">
+          <CardHeader>
+            <CardTitle>Fallback.</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CardDescription>
+              Other direct media URLs fall back to the native HTML media
+              element.
+            </CardDescription>
+          </CardContent>
+        </Card>
       </div>
-    </section>
+    </RouteLayout>
   )
 }

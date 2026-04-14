@@ -27,10 +27,9 @@ function AppLayout() {
   const hideShellPlayer = pathname === '/settings' || pathname === '/multiview'
 
   return (
-    <main className="flex h-screen w-screen">
+    <main className="flex h-dvh w-dvw overflow-hidden">
       <NavBar />
-
-      <section className="content-shell">
+      <section className="flex-1 min-h-0 w-full overflow-auto bg-gray-800">
         <PlayerSurface hidden={hideShellPlayer} muted={hideShellPlayer} />
         <Outlet />
       </section>
