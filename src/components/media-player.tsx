@@ -70,6 +70,23 @@ export function MediaPlayer({
   const getMediaElement = () =>
     sourceKind === 'mpegts' ? mpegtsRef.current : videoRef.current
 
+  const syncMediaLayout = () => {
+    const media = getMediaElement()
+    const container = containerRef.current
+
+    if (!media || !container) {
+      return
+    }
+
+    const { clientWidth, clientHeight } = container
+    if (!clientWidth || !clientHeight) {
+      return
+    }
+
+    media.style.width = `${clientWidth}px`
+    media.style.height = `${clientHeight}px`
+  }
+
   const clearHideControlsTimeout = () => {
     if (hideControlsTimeoutRef.current) {
       clearTimeout(hideControlsTimeoutRef.current)
@@ -155,6 +172,9 @@ export function MediaPlayer({
   useEffect(() => {
     const syncFullscreenState = () => {
       setIsFullscreen(document.fullscreenElement === containerRef.current)
+      requestAnimationFrame(() => {
+        syncMediaLayout()
+      })
     }
 
     syncFullscreenState()
@@ -164,6 +184,30 @@ export function MediaPlayer({
       document.removeEventListener('fullscreenchange', syncFullscreenState)
     }
   }, [])
+
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) {
+      return
+    }
+
+    const handleResize = () => {
+      requestAnimationFrame(() => {
+        syncMediaLayout()
+      })
+    }
+
+    handleResize()
+
+    const resizeObserver = new ResizeObserver(handleResize)
+    resizeObserver.observe(container)
+    window.addEventListener('resize', handleResize)
+
+    return () => {
+      resizeObserver.disconnect()
+      window.removeEventListener('resize', handleResize)
+    }
+  }, [sourceKind, url, variant, isFullscreen])
 
   useEffect(() => {
     if (!hasActivePlayback) {
@@ -217,11 +261,14 @@ export function MediaPlayer({
     const handlePlaying = () => updateStatus('Playing')
     const handleWaiting = () => updateStatus('Buffering')
     const handlePause = () => updateStatus('Paused')
+    const handleResize = () => syncMediaLayout()
 
     media.addEventListener('loadedmetadata', handleLoadedMetadata)
     media.addEventListener('playing', handlePlaying)
     media.addEventListener('waiting', handleWaiting)
     media.addEventListener('pause', handlePause)
+    media.addEventListener('loadeddata', handleResize)
+    media.addEventListener('resize', handleResize)
 
     if (sourceKind === 'hls' && Hls.isSupported()) {
       const video = videoRef.current
@@ -242,6 +289,7 @@ export function MediaPlayer({
         updateStatus(
           `Manifest ready with ${data.levels.length} quality level${data.levels.length === 1 ? '' : 's'}`,
         )
+        syncMediaLayout()
         void video.play().catch(() => {
           updateStatus('Stream loaded. Press play to start playback')
         })
@@ -284,6 +332,7 @@ export function MediaPlayer({
       setQuality('Managed natively')
       updateStatus('Using native HLS playback')
       videoRef.current.src = url
+      syncMediaLayout()
       void videoRef.current.play().catch(() => {
         updateStatus('Stream loaded. Press play to start playback')
       })
@@ -292,6 +341,7 @@ export function MediaPlayer({
       setQuality('Stream native')
       updateStatus('Loading MPEG-TS stream')
       mpegtsRef.current!.src = url
+      syncMediaLayout()
       void mpegtsRef.current!.load()
       void mpegtsRef.current!.play().catch(() => {
         updateStatus('Stream loaded. Press play to start playback')
@@ -301,6 +351,7 @@ export function MediaPlayer({
       setQuality('Source native')
       updateStatus('Loading media source')
       media.src = url
+      syncMediaLayout()
       void media.play().catch(() => {
         updateStatus('Media loaded. Press play to start playback')
       })
@@ -311,6 +362,8 @@ export function MediaPlayer({
       media.removeEventListener('playing', handlePlaying)
       media.removeEventListener('waiting', handleWaiting)
       media.removeEventListener('pause', handlePause)
+      media.removeEventListener('loadeddata', handleResize)
+      media.removeEventListener('resize', handleResize)
 
       if (hlsRef.current) {
         hlsRef.current.destroy()
