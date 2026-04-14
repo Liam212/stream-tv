@@ -1,5 +1,6 @@
 import { FormEvent } from 'react'
 import { useMutation } from '@tanstack/react-query'
+import { Button } from '@/components/ui/button'
 import { useAppStore } from '@/store/app-store'
 import { authenticateXtream } from '@/xtream'
 
@@ -43,7 +44,7 @@ export function XtreamSettingsForm() {
   }
 
   return (
-    <section className="bg-gray-900 p-4 rounded-md text-gray-100">
+    <section className="w-full max-w-[420px] flex-1 rounded-md bg-gray-900 p-4 text-gray-100">
       <h3>Xtream Connection</h3>
       <form className="stream-form" onSubmit={handleConnect}>
         <label className="field">
@@ -107,15 +108,16 @@ export function XtreamSettingsForm() {
         </label>
 
         <div className="actions">
-          <button type="submit" disabled={connectMutation.isPending}>
+          <Button type="submit" size="lg" disabled={connectMutation.isPending}>
             {connectMutation.isPending ? 'Connecting...' : 'Connect'}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="secondary"
+            size="lg"
+            variant="outline"
             onClick={disconnectXtream}>
             Disconnect
-          </button>
+          </Button>
         </div>
       </form>
 

@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router'
 import { cva } from 'class-variance-authority'
 import { Grid2x2, Play, type LucideIcon, SettingsIcon, Tv } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useAppStore } from '@/store/app-store'
 
 const navBarStyles = cva(
   'flex h-full w-16 flex-col bg-gray-900 px-2 py-4 text-gray-100 gap-2',
@@ -22,7 +23,12 @@ const navItemStyles = cva(
   },
 )
 
-const navItems = [
+const navItems: Array<{
+  to: '/' | '/guide' | '/multiview' | '/settings'
+  label: string
+  icon: LucideIcon
+  experimental?: boolean
+}> = [
   {
     to: '/',
     label: 'Direct Play',
@@ -37,16 +43,17 @@ const navItems = [
     to: '/multiview',
     label: 'Multi View',
     icon: Grid2x2,
+    experimental: true,
   },
   {
     to: '/settings',
     label: 'Settings',
     icon: SettingsIcon,
   },
-] as const
+]
 
 type NavItemProps = {
-  to: (typeof navItems)[number]['to']
+  to: '/' | '/guide' | '/multiview' | '/settings'
   label: string
   icon: LucideIcon
 }
@@ -65,9 +72,15 @@ function NavItem({ to, label, icon: Icon }: NavItemProps) {
 }
 
 export function NavBar() {
+  const experimentalFeaturesEnabled = useAppStore(
+    state => state.experimentalFeaturesEnabled,
+  )
+
   return (
     <nav className={cn(navBarStyles())}>
-      {navItems.map(item => (
+      {navItems
+        .filter(item => !item.experimental || experimentalFeaturesEnabled)
+        .map(item => (
         <NavItem
           key={item.to}
           to={item.to}

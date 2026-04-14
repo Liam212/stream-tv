@@ -14,6 +14,9 @@ type AppStore = {
   streamUrl: string
   activeUrl: string
   activeTitle: string
+  playerVolume: number
+  playerMuted: boolean
+  experimentalFeaturesEnabled: boolean
   xtreamProfile: XtreamProfile
   connectedProfile: XtreamProfile | null
   connectionStatus: string
@@ -21,9 +24,11 @@ type AppStore = {
   setXtreamProfile: (
     updater: XtreamProfile | ((current: XtreamProfile) => XtreamProfile),
   ) => void
+  setExperimentalFeaturesEnabled: (value: boolean) => void
   setConnectionStatus: (value: string) => void
   connectXtreamProfile: (profile: XtreamProfile, status?: string) => void
   disconnectXtream: () => void
+  setPlayerAudio: (state: { volume: number; muted: boolean }) => void
   loadUrl: (url: string, title: string) => void
   loadManualUrl: () => void
   stopPlayback: () => void
@@ -44,10 +49,15 @@ export const useAppStore = create<AppStore>()(
       streamUrl: DEFAULT_STREAM_URL,
       activeUrl: DEFAULT_STREAM_URL,
       activeTitle: 'Mux sample stream',
+      playerVolume: 1,
+      playerMuted: false,
+      experimentalFeaturesEnabled: false,
       xtreamProfile: defaultXtreamProfile,
       connectedProfile: null,
       connectionStatus: 'Not connected',
       setStreamUrl: value => set({ streamUrl: value }),
+      setExperimentalFeaturesEnabled: value =>
+        set({ experimentalFeaturesEnabled: value }),
       setXtreamProfile: updater => {
         set(state => ({
           xtreamProfile:
@@ -68,6 +78,11 @@ export const useAppStore = create<AppStore>()(
         set({
           connectedProfile: null,
           connectionStatus: 'Disconnected',
+        }),
+      setPlayerAudio: ({ volume, muted }) =>
+        set({
+          playerVolume: Math.max(0, Math.min(1, volume)),
+          playerMuted: muted,
         }),
       loadUrl: (url, title) =>
         set({
@@ -119,6 +134,9 @@ export const useAppStore = create<AppStore>()(
       storage: createJSONStorage(() => window.localStorage),
       partialize: state => ({
         streamUrl: state.streamUrl,
+        playerVolume: state.playerVolume,
+        playerMuted: state.playerMuted,
+        experimentalFeaturesEnabled: state.experimentalFeaturesEnabled,
         xtreamProfile: state.xtreamProfile,
       }),
     },

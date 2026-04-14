@@ -106,6 +106,9 @@ function fitSlotsToCount(slots: MultiViewSlot[], count: number) {
 
 export function MultiViewPage() {
   const connectedProfile = useAppStore(state => state.connectedProfile)
+  const experimentalFeaturesEnabled = useAppStore(
+    state => state.experimentalFeaturesEnabled,
+  )
   const [selectedPresetId, setSelectedPresetId] = useState('focus-corners')
   const [pickerSlotId, setPickerSlotId] = useState<number | null>(null)
   const [pickerMode, setPickerMode] = useState<PickerMode>('search')
@@ -254,6 +257,24 @@ export function MultiViewPage() {
             }
           : slot,
       ),
+    )
+  }
+
+  if (!experimentalFeaturesEnabled) {
+    return (
+      <section className="route-panel">
+        <p className="eyebrow">Experimental</p>
+        <h2 className="text-2xl font-semibold text-slate-50">
+          Multi View is hidden
+        </h2>
+        <p className="mt-3 text-sm text-slate-400">
+          Enable experimental features in{' '}
+          <Link to="/settings" className="inline-link">
+            Settings
+          </Link>{' '}
+          to access this screen.
+        </p>
+      </section>
     )
   }
 
@@ -428,6 +449,7 @@ export function MultiViewPage() {
                   url={slot.url}
                   title={slot.title}
                   variant="tile"
+                  compact={cell.className.includes('slot-corner')}
                   preferredVolume={slot.volume}
                   preferredMuted={slot.muted}
                   onAudioStateChange={nextAudio =>

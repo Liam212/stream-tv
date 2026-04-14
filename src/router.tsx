@@ -24,13 +24,13 @@ function AppLayout() {
   const pathname = useRouterState({
     select: state => state.location.pathname,
   })
-  const hideShellPlayer = pathname === '/settings' || pathname === '/multiview'
+  const floatingPlayer = pathname !== '/'
 
   return (
     <main className="flex h-dvh w-dvw overflow-hidden">
       <NavBar />
       <section className="flex-1 min-h-0 w-full overflow-auto bg-gray-800">
-        <PlayerSurface hidden={hideShellPlayer} muted={hideShellPlayer} />
+        <PlayerSurface variant={floatingPlayer ? 'floating' : 'inline'} />
         <Outlet />
       </section>
     </main>

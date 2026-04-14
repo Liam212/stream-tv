@@ -78,6 +78,13 @@ const actionMap: Record<XtreamContentType, string> = {
   series: 'get_series',
 }
 
+export type GuideRow = {
+  channel: XtreamStream
+  epg: XtreamEpgEntry[]
+  isLoading: boolean
+  isError: boolean
+}
+
 const categoryMap: Record<XtreamContentType, string> = {
   live: 'get_live_categories',
   vod: 'get_vod_categories',
@@ -100,7 +107,10 @@ function toArray<T>(value: unknown): T[] {
   return []
 }
 
-function createPlayerApiUrl(profile: XtreamProfile, params: Record<string, string>) {
+function createPlayerApiUrl(
+  profile: XtreamProfile,
+  params: Record<string, string>,
+) {
   const url = new URL('player_api.php', `${normalizeBaseUrl(profile.baseUrl)}/`)
   url.searchParams.set('username', profile.username)
   url.searchParams.set('password', profile.password)
@@ -114,16 +124,26 @@ function createPlayerApiUrl(profile: XtreamProfile, params: Record<string, strin
   return url.toString()
 }
 
-async function fetchJson<T>(profile: XtreamProfile, params: Record<string, string> = {}) {
-  return window.xtreamApi.request(createPlayerApiUrl(profile, params)) as Promise<T>
+async function fetchJson<T>(
+  profile: XtreamProfile,
+  params: Record<string, string> = {},
+) {
+  return window.xtreamApi.request(
+    createPlayerApiUrl(profile, params),
+  ) as Promise<T>
 }
 
 export async function authenticateXtream(profile: XtreamProfile) {
   return fetchJson<XtreamAuthResponse>(profile)
 }
 
-export async function getXtreamCategories(profile: XtreamProfile, contentType: XtreamContentType) {
-  const categories = await fetchJson<unknown>(profile, { action: categoryMap[contentType] })
+export async function getXtreamCategories(
+  profile: XtreamProfile,
+  contentType: XtreamContentType,
+) {
+  const categories = await fetchJson<unknown>(profile, {
+    action: categoryMap[contentType],
+  })
   return toArray<XtreamCategory>(categories)
 }
 
@@ -140,7 +160,10 @@ export async function getXtreamStreams(
   return toArray<XtreamStream>(streams)
 }
 
-export async function getXtreamSeriesInfo(profile: XtreamProfile, seriesId: number) {
+export async function getXtreamSeriesInfo(
+  profile: XtreamProfile,
+  seriesId: number,
+) {
   const primary = await fetchJson<XtreamSeriesInfo>(profile, {
     action: 'get_series_info',
     series_id: String(seriesId),
@@ -171,13 +194,15 @@ function decodeXtreamText(value: unknown) {
 function mapEpgEntries(value: unknown): XtreamEpgEntry[] {
   const rows = toArray<Record<string, unknown>>(value)
 
-  return rows.map((row) => ({
+  return rows.map(row => ({
     id: String(row.id ?? row.epg_id ?? `${row.start ?? ''}-${row.end ?? ''}`),
     title: decodeXtreamText(row.title ?? row.programme_title ?? ''),
     description: decodeXtreamText(row.description ?? row.plot ?? ''),
     start: String(row.start ?? row.start_timestamp ?? ''),
     end: String(row.end ?? row.stop ?? row.stop_timestamp ?? ''),
-    startTimestamp: row.start_timestamp ? Number(row.start_timestamp) : undefined,
+    startTimestamp: row.start_timestamp
+      ? Number(row.start_timestamp)
+      : undefined,
     endTimestamp: row.stop_timestamp ? Number(row.stop_timestamp) : undefined,
   }))
 }
@@ -212,12 +237,14 @@ export function getSeriesEpisodes(seriesInfo: XtreamSeriesInfo) {
   const seasons = toArray<Record<string, unknown>>(seriesInfo.episodes)
   const episodes: XtreamEpisode[] = []
 
-  seasons.forEach((season) => {
-    toArray<Record<string, unknown>>(season).forEach((episode) => {
+  seasons.forEach(season => {
+    toArray<Record<string, unknown>>(season).forEach(episode => {
       const info = episode.info as XtreamEpisode['info'] | undefined
       episodes.push({
         id: Number(episode.id),
-        title: String(episode.title ?? `Episode ${episode.episode_num ?? ''}`.trim()),
+        title: String(
+          episode.title ?? `Episode ${episode.episode_num ?? ''}`.trim(),
+        ),
         containerExtension: String(episode.container_extension ?? 'mp4'),
         episodeNum: Number(episode.episode_num ?? 0) || undefined,
         info,
@@ -225,7 +252,9 @@ export function getSeriesEpisodes(seriesInfo: XtreamSeriesInfo) {
     })
   })
 
-  return episodes.sort((left, right) => (left.episodeNum ?? 0) - (right.episodeNum ?? 0))
+  return episodes.sort(
+    (left, right) => (left.episodeNum ?? 0) - (right.episodeNum ?? 0),
+  )
 }
 
 export function buildXtreamStreamUrl(
@@ -247,6 +276,9 @@ export function buildXtreamStreamUrl(
   return `${normalizeBaseUrl(profile.baseUrl)}/movie/${profile.username}/${profile.password}/${streamId}.${extension}`
 }
 
-export function buildXtreamEpisodeUrl(profile: XtreamProfile, episode: XtreamEpisode) {
+export function buildXtreamEpisodeUrl(
+  profile: XtreamProfile,
+  episode: XtreamEpisode,
+) {
   return `${normalizeBaseUrl(profile.baseUrl)}/series/${profile.username}/${profile.password}/${episode.id}.${episode.containerExtension}`
 }

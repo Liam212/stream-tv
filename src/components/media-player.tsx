@@ -1,14 +1,14 @@
-import { useEffect, useRef, useState } from 'react'
-import Hls from 'hls.js'
 import {
-  Maximize,
-  Pause,
-  Play,
-  Volume2,
-  VolumeX,
-  X,
-} from 'lucide-react'
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+} from 'react'
+import Hls from 'hls.js'
+import { Maximize, Pause, Play, Volume2, VolumeX, X } from 'lucide-react'
 import { getSourceKind } from '@/lib/player'
+import { cn } from '@/lib/utils'
 
 type MediaElementLike = HTMLElement & {
   src: string
@@ -27,6 +27,7 @@ type MediaPlayerProps = {
   url: string
   title: string
   variant?: 'inline' | 'floating' | 'tile'
+  compact?: boolean
   hidden?: boolean
   muted?: boolean
   preferredVolume?: number
@@ -39,6 +40,7 @@ export function MediaPlayer({
   url,
   title,
   variant = 'inline',
+  compact = false,
   hidden = false,
   muted = false,
   preferredVolume = 1,
@@ -49,6 +51,9 @@ export function MediaPlayer({
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const mpegtsRef = useRef<MediaElementLike | null>(null)
   const containerRef = useRef<HTMLElement | null>(null)
+  const hideControlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  )
   const hlsRef = useRef<Hls | null>(null)
   const [status, setStatus] = useState('Ready to load a stream')
   const [quality, setQuality] = useState('Auto')
@@ -57,12 +62,38 @@ export function MediaPlayer({
   const [isMuted, setIsMuted] = useState(muted)
   const [volume, setVolume] = useState(1)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [showControls, setShowControls] = useState(true)
   const sourceKind = getSourceKind(url)
   const hasActivePlayback = url.trim().length > 0
   const normalizedPreferredVolume = Math.max(0, Math.min(1, preferredVolume))
 
   const getMediaElement = () =>
     sourceKind === 'mpegts' ? mpegtsRef.current : videoRef.current
+
+  const clearHideControlsTimeout = () => {
+    if (hideControlsTimeoutRef.current) {
+      clearTimeout(hideControlsTimeoutRef.current)
+      hideControlsTimeoutRef.current = null
+    }
+  }
+
+  const scheduleHideControls = () => {
+    clearHideControlsTimeout()
+
+    if (!isPlaying) {
+      setShowControls(true)
+      return
+    }
+
+    hideControlsTimeoutRef.current = setTimeout(() => {
+      setShowControls(false)
+    }, 2200)
+  }
+
+  const revealControls = () => {
+    setShowControls(true)
+    scheduleHideControls()
+  }
 
   useEffect(() => {
     const media = getMediaElement()
@@ -133,6 +164,26 @@ export function MediaPlayer({
       document.removeEventListener('fullscreenchange', syncFullscreenState)
     }
   }, [])
+
+  useEffect(() => {
+    if (!hasActivePlayback) {
+      setShowControls(true)
+      clearHideControlsTimeout()
+      return
+    }
+
+    if (!isPlaying) {
+      setShowControls(true)
+      clearHideControlsTimeout()
+      return
+    }
+
+    scheduleHideControls()
+
+    return () => {
+      clearHideControlsTimeout()
+    }
+  }, [hasActivePlayback, isPlaying])
 
   useEffect(() => {
     const media = getMediaElement()
@@ -282,6 +333,31 @@ export function MediaPlayer({
     media.pause()
   }
 
+  const handlePlaybackKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.key !== ' ' && event.key !== 'Enter') {
+      return
+    }
+
+    const target = event.target as HTMLElement
+    const playToggleTrigger = target.closest('[data-play-toggle="true"]')
+    const interactiveControl = target.closest('button, input, textarea, select')
+
+    if (interactiveControl && !playToggleTrigger) {
+      return
+    }
+
+    if (
+      target instanceof HTMLInputElement ||
+      target instanceof HTMLTextAreaElement ||
+      target instanceof HTMLSelectElement
+    ) {
+      return
+    }
+
+    event.preventDefault()
+    togglePlayback()
+  }
+
   const toggleMute = () => {
     const media = getMediaElement()
     if (!media) {
@@ -322,78 +398,146 @@ export function MediaPlayer({
     return null
   }
 
-  const playerClass =
+  const wrapperClassName = cn(
     variant === 'floating'
-      ? 'floating-player'
+      ? 'fixed right-6 bottom-6 z-30 w-[min(680px,calc(100vw-48px))] shadow-[0_28px_80px_rgba(2,6,23,0.5)]'
       : variant === 'tile'
-        ? 'multi-player'
-        : 'inline-player'
+        ? 'grid h-full w-full border-0 bg-transparent p-0'
+        : 'mb-4 border border-white/10 bg-slate-950/90 p-3',
+    isFullscreen && 'inset-0 h-screen w-screen max-w-none p-0',
+    hidden &&
+      'pointer-events-none fixed top-0 left-[-10000px] h-px w-px overflow-hidden border-0 p-0 opacity-0',
+  )
+
+  const frameClassName = cn(
+    'group/player relative isolate w-full overflow-hidden rounded-md bg-black',
+    variant === 'tile' || isFullscreen
+      ? 'h-full min-h-0'
+      : 'aspect-video min-h-[220px]',
+    isPlaying && !showControls && 'cursor-none',
+  )
+
+  const mediaClassName =
+    'absolute inset-0 block h-full w-full bg-[#020617] object-cover'
+
+  const shadowControlClassName =
+    'inline-flex items-center justify-center rounded-full bg-black/70 text-white shadow-[0_18px_45px_rgba(0,0,0,0.6)] backdrop-blur-md transition-colors hover:bg-black/85'
 
   return (
     <section
       ref={containerRef}
-      className={`${playerClass}${hidden ? ' is-page-hidden' : ''}`}
+      className={wrapperClassName}
       aria-hidden={hidden}>
-      <div className="player-frame">
+      <div
+        className={frameClassName}
+        tabIndex={0}
+        onKeyDown={handlePlaybackKeyDown}
+        onMouseMove={revealControls}
+        onMouseEnter={revealControls}
+        onMouseLeave={() => {
+          if (isPlaying) {
+            clearHideControlsTimeout()
+            setShowControls(false)
+          }
+        }}
+        onFocus={revealControls}>
         {sourceKind === 'mpegts' ? (
-          <mpegts-video ref={mpegtsRef} className="player" preload="auto" />
+          <mpegts-video
+            ref={mpegtsRef}
+            className={mediaClassName}
+            style={{ '--media-object-fit': 'cover' } as CSSProperties}
+            preload="auto"
+          />
         ) : (
           <video
             ref={videoRef}
-            className="player"
+            className={mediaClassName}
             playsInline
             preload="auto"
             muted={muted}
           />
         )}
 
-        <div className="player-overlay">
-          <div className="player-overlay-top">
+        <div
+          className={cn(
+            'absolute inset-0 grid grid-rows-[auto_1fr_auto] p-3 transition-[opacity,background] duration-200',
+            showControls
+              ? 'pointer-events-auto opacity-100 bg-[linear-gradient(180deg,rgba(2,6,23,0.88),transparent_30%),linear-gradient(0deg,rgba(2,6,23,0.96),transparent_34%)]'
+              : 'pointer-events-none opacity-0 bg-[linear-gradient(180deg,rgba(2,6,23,0.76),transparent_24%),linear-gradient(0deg,rgba(2,6,23,0.86),transparent_28%)]',
+          )}>
+          <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="floating-player-label">Now Playing</p>
-              <strong className="floating-player-title">
+              <p className="mb-1 text-[0.72rem] uppercase tracking-[0.12em] text-slate-400">
+                Now Playing
+              </p>
+              <strong
+                className={cn(
+                  'block truncate text-sm text-slate-50',
+                  compact && 'max-w-[10rem] text-[0.82rem]',
+                )}>
                 {title || 'Active stream'}
               </strong>
             </div>
             {onClose && (
               <button
                 type="button"
-                className="player-control player-close"
+                className="ml-auto"
                 onClick={onClose}
                 aria-label="Close player">
-                <X size={18} />
+                <X size={28} color="white" />
               </button>
             )}
           </div>
 
-          <div className="player-overlay-center">
+          <div className="grid place-items-center">
             <button
               type="button"
-              className="player-control player-control-primary"
+              data-play-toggle="true"
+              className={cn(
+                'inline-flex items-center justify-center rounded-full border border-white/10 bg-black/70 text-white shadow-[0_18px_45px_rgba(0,0,0,0.6)] backdrop-blur-md transition-colors hover:bg-black/85',
+                compact ? 'hidden' : 'size-16',
+              )}
               onClick={togglePlayback}
+              onKeyDown={handlePlaybackKeyDown}
               aria-label={isPlaying ? 'Pause stream' : 'Play stream'}>
-              {isPlaying ? <Pause size={22} /> : <Play size={22} />}
+              {isPlaying ? (
+                <Pause size={22} color="white" />
+              ) : (
+                <Play size={22} color="white" />
+              )}
             </button>
           </div>
 
-          <div className="player-overlay-bottom">
-            <div className="player-overlay-meta">
-              <span>{status}</span>
-              <span>{streamMode}</span>
-              <span>{quality}</span>
+          <div className="flex items-center justify-between gap-3">
+            <div className={cn('flex items-center gap-2', compact && 'hidden')}>
+              <span className="border border-white/10 bg-slate-900/70 px-2 py-1 text-[0.82rem] text-blue-100">
+                {status}
+              </span>
+              <span className="border border-white/10 bg-slate-900/70 px-2 py-1 text-[0.82rem] text-blue-100">
+                {streamMode}
+              </span>
+              <span className="border border-white/10 bg-slate-900/70 px-2 py-1 text-[0.82rem] text-blue-100">
+                {quality}
+              </span>
             </div>
 
-            <div className="player-overlay-actions">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
-                className="player-control"
+                className={cn(shadowControlClassName, 'size-10')}
                 onClick={toggleMute}
                 aria-label={isMuted ? 'Unmute stream' : 'Mute stream'}>
                 {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
               </button>
 
-              <label className="player-volume" aria-label="Volume">
+              <label
+                className={cn(
+                  'inline-flex h-10 w-28 items-center rounded-full bg-black/55 px-3 text-white shadow-[0_18px_45px_rgba(0,0,0,0.45)] backdrop-blur-md',
+                  compact && 'hidden',
+                )}
+                aria-label="Volume">
                 <input
+                  className="h-1 w-full accent-amber-400"
                   type="range"
                   min="0"
                   max="100"
@@ -407,7 +551,11 @@ export function MediaPlayer({
 
               <button
                 type="button"
-                className="player-control"
+                className={cn(
+                  shadowControlClassName,
+                  'size-10',
+                  compact && 'hidden',
+                )}
                 onClick={toggleFullscreen}
                 aria-label={
                   isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'
