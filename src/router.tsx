@@ -14,6 +14,7 @@ import { PlayerPage } from '@/routes/player-page'
 import { SettingsPage } from '@/routes/settings-page'
 import { TvGuidePage } from '@/routes/tv-guide-page'
 import { XtreamPage } from '@/routes/xtream-page'
+import { NavBar } from './components/nav-bar'
 
 type RouterContext = {
   queryClient: QueryClient
@@ -23,47 +24,11 @@ function AppLayout() {
   const pathname = useRouterState({
     select: state => state.location.pathname,
   })
-  const hideShellPlayer =
-    pathname === '/settings' || pathname === '/multiview'
+  const hideShellPlayer = pathname === '/settings' || pathname === '/multiview'
 
   return (
-    <main className="shell">
-      <aside className="sidebar">
-        <nav className="side-nav">
-          <Link
-            to="/"
-            className="nav-link"
-            activeProps={{ className: 'nav-link active' }}
-            aria-label="Direct Play"
-            title="Direct Play">
-            <Play className="nav-icon" />
-          </Link>
-          <Link
-            to="/guide"
-            className="nav-link"
-            activeProps={{ className: 'nav-link active' }}
-            aria-label="TV Guide"
-            title="TV Guide">
-            <Tv className="nav-icon" />
-          </Link>
-          <Link
-            to="/multiview"
-            className="nav-link"
-            activeProps={{ className: 'nav-link active' }}
-            aria-label="Multi View"
-            title="Multi View">
-            <Grid2x2 className="nav-icon" />
-          </Link>
-          <Link
-            to="/settings"
-            className="nav-link"
-            activeProps={{ className: 'nav-link active' }}
-            aria-label="Settings"
-            title="Settings">
-            <SettingsIcon className="nav-icon" />
-          </Link>
-        </nav>
-      </aside>
+    <main className="flex h-screen w-screen">
+      <NavBar />
 
       <section className="content-shell">
         <PlayerSurface hidden={hideShellPlayer} muted={hideShellPlayer} />
