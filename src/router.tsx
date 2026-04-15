@@ -9,7 +9,6 @@ import {
 import type { QueryClient } from '@tanstack/react-query'
 import { PlayerSurface } from './components/player-surface'
 import { MultiViewPage } from '@/routes/multi-view-page'
-import { PlayerPage } from '@/routes/player-page'
 import { SettingsPage } from '@/routes/settings-page'
 import { TvGuidePage } from '@/routes/tv-guide-page'
 import { XtreamPage } from '@/routes/xtream-page'
@@ -40,15 +39,9 @@ const rootRoute = createRootRouteWithContext<RouterContext>()({
   component: AppLayout,
 })
 
-const playerRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/',
-  component: PlayerPage,
-})
-
 const guideRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/guide',
+  path: '/',
   component: TvGuidePage,
 })
 
@@ -83,7 +76,6 @@ const settingsRoute = createRoute({
 })
 
 const routeTree = rootRoute.addChildren([
-  playerRoute,
   guideRoute,
   multiViewRoute,
   xtreamLiveRoute,

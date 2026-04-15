@@ -31,11 +31,6 @@ const navItems: Array<{
 }> = [
   {
     to: '/',
-    label: 'Direct Play',
-    icon: Play,
-  },
-  {
-    to: '/guide',
     label: 'TV Guide',
     icon: Tv,
   },
@@ -81,13 +76,13 @@ export function NavBar() {
       {navItems
         .filter(item => !item.experimental || experimentalFeaturesEnabled)
         .map(item => (
-        <NavItem
-          key={item.to}
-          to={item.to}
-          label={item.label}
-          icon={item.icon}
-        />
-      ))}
+          <NavItem
+            key={item.to}
+            to={item.to}
+            label={item.label}
+            icon={item.icon}
+          />
+        ))}
     </nav>
   )
 }
