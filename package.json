@@ -1,6 +1,6 @@
 {
   "name": "stream-tv",
-  "version": "1.3.2",
+  "version": "2.0.0",
   "main": "dist-electron/main/index.js",
   "description": "Electron, Vite, React, and HLS.js desktop player.",
   "author": "liams",
