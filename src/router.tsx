@@ -1,10 +1,8 @@
 import {
-  Link,
   Outlet,
   createRootRouteWithContext,
   createRoute,
   createRouter,
-  useRouterState,
 } from '@tanstack/react-router'
 import type { QueryClient } from '@tanstack/react-query'
 import { PlayerSurface } from './components/player-surface'

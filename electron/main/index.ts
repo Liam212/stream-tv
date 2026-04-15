@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, ipcMain } from 'electron'
+import { app, BrowserWindow, shell, ipcMain, session } from 'electron'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
@@ -91,6 +91,40 @@ function isAllowedAppNavigation(url: string) {
   return url === indexHtml || url.startsWith('file://')
 }
 
+function injectCorsHeaders() {
+  session.defaultSession.webRequest.onHeadersReceived(
+    {
+      urls: ['http://*/*', 'https://*/*'],
+    },
+    (details, callback) => {
+      const responseHeaders: Record<string, string[]> = {}
+      const overwrittenHeaderNames = new Set([
+        'access-control-allow-origin',
+        'access-control-allow-methods',
+        'access-control-allow-headers',
+        'cross-origin-resource-policy',
+        'timing-allow-origin',
+      ])
+
+      Object.entries(details.responseHeaders ?? {}).forEach(([key, value]) => {
+        if (overwrittenHeaderNames.has(key.toLowerCase())) {
+          return
+        }
+
+        responseHeaders[key] = Array.isArray(value) ? value : [value]
+      })
+
+      responseHeaders['Access-Control-Allow-Origin'] = ['*']
+      responseHeaders['Access-Control-Allow-Methods'] = ['GET, HEAD, OPTIONS']
+      responseHeaders['Access-Control-Allow-Headers'] = ['*']
+      responseHeaders['Cross-Origin-Resource-Policy'] = ['cross-origin']
+      responseHeaders['Timing-Allow-Origin'] = ['*']
+
+      callback({ responseHeaders })
+    },
+  )
+}
+
 async function createWindow() {
   win = new BrowserWindow({
     title: 'Stream TV',
@@ -104,7 +138,8 @@ async function createWindow() {
     },
   })
 
-  if (VITE_DEV_SERVER_URL) { // #298
+  if (VITE_DEV_SERVER_URL) {
+    // #298
     win.loadURL(VITE_DEV_SERVER_URL)
     // Open devTool if the app is not packaged
     win.webContents.openDevTools()
@@ -153,7 +188,10 @@ ipcMain.handle('xtream:request', async (_, payload: XtreamRequestPayload) => {
   }
 })
 
-app.whenReady().then(createWindow)
+app.whenReady().then(() => {
+  injectCorsHeaders()
+  return createWindow()
+})
 
 app.on('window-all-closed', () => {
   win = null
