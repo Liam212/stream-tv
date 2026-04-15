@@ -92,8 +92,9 @@ export const useAppStore = create<AppStore>()(
         }),
       loadManualUrl: () => {
         const { streamUrl } = get()
+        const trimmedUrl = streamUrl.trim()
         set({
-          activeUrl: streamUrl.trim(),
+          activeUrl: trimmedUrl,
           activeTitle: 'Manual stream',
         })
       },

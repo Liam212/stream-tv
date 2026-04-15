@@ -7,6 +7,7 @@ import {
 } from 'react'
 import Hls from 'hls.js'
 import { Maximize, Pause, Play, Volume2, VolumeX, X } from 'lucide-react'
+import { useFloatingPlayerDrag } from '@/hooks/use-floating-player-drag'
 import { getSourceKind } from '@/lib/player'
 import { cn } from '@/lib/utils'
 
@@ -50,7 +51,8 @@ export function MediaPlayer({
 }: MediaPlayerProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const mpegtsRef = useRef<MediaElementLike | null>(null)
-  const containerRef = useRef<HTMLElement | null>(null)
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  const wrapperRef = useRef<HTMLElement | null>(null)
   const hideControlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   )
@@ -66,9 +68,20 @@ export function MediaPlayer({
   const sourceKind = getSourceKind(url)
   const hasActivePlayback = url.trim().length > 0
   const normalizedPreferredVolume = Math.max(0, Math.min(1, preferredVolume))
-
+  const isFloatingPlayer = variant === 'floating'
   const getMediaElement = () =>
     sourceKind === 'mpegts' ? mpegtsRef.current : videoRef.current
+  const {
+    isDragging,
+    style: floatingStyle,
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+    handlePointerCancel,
+  } = useFloatingPlayerDrag({
+    enabled: isFloatingPlayer,
+    disabled: isFullscreen,
+  })
 
   const syncMediaLayout = () => {
     const media = getMediaElement()
@@ -453,7 +466,7 @@ export function MediaPlayer({
 
   const wrapperClassName = cn(
     variant === 'floating'
-      ? 'fixed right-6 bottom-6 z-30 w-[min(680px,calc(100vw-48px))] shadow-[0_28px_80px_rgba(2,6,23,0.5)]'
+      ? 'fixed right-6 bottom-6 z-30 w-[min(680px,calc(100vw-48px))] shadow-[0_28px_80px_rgba(2,6,23,0.5)] will-change-transform'
       : variant === 'tile'
         ? 'grid h-full w-full border-0 bg-transparent p-0'
         : 'mb-4 border border-white/10 bg-slate-950/90 p-3',
@@ -478,10 +491,12 @@ export function MediaPlayer({
 
   return (
     <section
-      ref={containerRef}
+      ref={wrapperRef}
       className={wrapperClassName}
+      style={floatingStyle}
       aria-hidden={hidden}>
       <div
+        ref={containerRef}
         className={frameClassName}
         tabIndex={0}
         onKeyDown={handlePlaybackKeyDown}
@@ -519,7 +534,17 @@ export function MediaPlayer({
               : 'pointer-events-none opacity-0 bg-[linear-gradient(180deg,rgba(2,6,23,0.76),transparent_24%),linear-gradient(0deg,rgba(2,6,23,0.86),transparent_28%)]',
           )}>
           <div className="flex items-center justify-between gap-3">
-            <div>
+            <div
+              className={cn(
+                'min-w-0',
+                isFloatingPlayer &&
+                  'cursor-grab touch-none select-none active:cursor-grabbing',
+                isDragging && 'cursor-grabbing',
+              )}
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerCancel}>
               <p className="mb-1 text-[0.72rem] uppercase tracking-[0.12em] text-slate-400">
                 Now Playing
               </p>

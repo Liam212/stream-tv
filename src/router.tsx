@@ -7,7 +7,6 @@ import {
   useRouterState,
 } from '@tanstack/react-router'
 import type { QueryClient } from '@tanstack/react-query'
-import { Grid2x2, Play, SettingsIcon, Tv } from 'lucide-react'
 import { PlayerSurface } from './components/player-surface'
 import { MultiViewPage } from '@/routes/multi-view-page'
 import { PlayerPage } from '@/routes/player-page'
