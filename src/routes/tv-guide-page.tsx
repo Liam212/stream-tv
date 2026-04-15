@@ -159,12 +159,6 @@ function buildGuideBlocks(
 
       const clippedStartMs = Math.max(startMs, windowStartMs)
       const clippedEndMs = Math.min(endMs, windowEndMs)
-      console.log('Entry:', entry.title, {
-        startMs,
-        endMs,
-        clippedStartMs,
-        clippedEndMs,
-      })
 
       const left = ((clippedStartMs - windowStartMs) / windowDuration) * 100
       const width = Math.max(
