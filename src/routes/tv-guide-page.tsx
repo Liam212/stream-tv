@@ -3,6 +3,11 @@ import { useQueries, useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription } from '@/components/ui/card'
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from '@/components/ui/hover-card'
 import RouteLayout from '@/components/ui/layout'
 import { cn } from '@/lib/utils'
 import {
@@ -41,6 +46,8 @@ type GuideBlock = {
   id: string
   title: string
   startLabel: string
+  endLabel: string
+  description: string
   left: number
   width: number
   isCurrent: boolean
@@ -118,6 +125,17 @@ function formatGuideTime(entry: XtreamEpgEntry) {
   return entry.start
 }
 
+function formatGuideTimeLabel(timestampMs: number | null, fallback: string) {
+  if (timestampMs) {
+    return new Date(timestampMs).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  }
+
+  return fallback
+}
+
 function buildGuideBlocks(
   epg: XtreamEpgEntry[],
   windowStartMs: number,
@@ -152,6 +170,8 @@ function buildGuideBlocks(
         id: entry.id,
         title: entry.title || 'Untitled programme',
         startLabel: formatGuideTime(entry),
+        endLabel: formatGuideTimeLabel(endMs, entry.end),
+        description: entry.description || '',
         left,
         width,
         isCurrent: now >= startMs && now < endMs,
@@ -256,22 +276,52 @@ const GuideTimelineRow = memo(function GuideTimelineRow({
           {!row.isLoading &&
             !row.isError &&
             blocks.map(block => (
-              <div
-                key={block.id}
-                className={`absolute top-2 bottom-2 overflow-hidden rounded-md border px-3 py-2 text-left ${
-                  block.isCurrent
-                    ? 'border-primary/50 bg-primary/20 text-primary-foreground'
-                    : 'border-border bg-card/90 text-card-foreground'
-                }`}
-                style={{
-                  left: `${block.left}%`,
-                  width: `${block.width}%`,
-                }}>
-                <p className="truncate text-xs font-medium text-muted-foreground">
-                  {block.startLabel}
-                </p>
-                <p className="truncate text-sm font-semibold">{block.title}</p>
-              </div>
+              <HoverCard key={block.id} openDelay={120} closeDelay={80}>
+                <HoverCardTrigger asChild>
+                  <button
+                    type="button"
+                    className={cn(
+                      'absolute top-2 bottom-2 overflow-hidden rounded-md border px-3 py-2 text-left',
+                      block.isCurrent
+                        ? 'border-primary/50 bg-primary/20 text-primary-foreground'
+                        : 'border-border bg-card/90 text-card-foreground',
+                    )}
+                    style={{
+                      left: `${block.left}%`,
+                      width: `${block.width}%`,
+                    }}
+                    title={`${block.title} (${block.startLabel} - ${block.endLabel})`}>
+                    <p className="truncate text-xs font-medium text-muted-foreground">
+                      {block.startLabel}
+                    </p>
+                    <p className="truncate text-sm font-semibold">
+                      {block.title}
+                    </p>
+                  </button>
+                </HoverCardTrigger>
+                <HoverCardContent
+                  align="start"
+                  className="w-80 border-border/80 bg-slate-950/98 text-slate-100">
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
+                        Programme
+                      </p>
+                      <p className="text-sm font-semibold text-slate-50">
+                        {block.title}
+                      </p>
+                    </div>
+                    <div className="text-sm text-slate-300">
+                      {block.startLabel} - {block.endLabel}
+                    </div>
+                    {block.description && (
+                      <p className="text-sm leading-6 text-slate-300">
+                        {block.description}
+                      </p>
+                    )}
+                  </div>
+                </HoverCardContent>
+              </HoverCard>
             ))}
         </div>
       </TableCell>

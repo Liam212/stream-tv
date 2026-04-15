@@ -179,13 +179,43 @@ export async function getXtreamSeriesInfo(
   })
 }
 
+function decodeBase64Utf8(value: string) {
+  const normalized = value.replace(/-/g, '+').replace(/_/g, '/')
+  const padded = normalized.padEnd(
+    normalized.length + ((4 - (normalized.length % 4)) % 4),
+    '=',
+  )
+  const binary = window.atob(padded)
+  const bytes = Uint8Array.from(binary, char => char.charCodeAt(0))
+
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(bytes)
+  } catch {
+    return new TextDecoder('utf-8').decode(bytes)
+  }
+}
+
+function looksLikeBase64(value: string) {
+  const trimmed = value.trim()
+
+  return (
+    trimmed.length >= 8 &&
+    trimmed.length % 4 === 0 &&
+    /^[A-Za-z0-9+/=_-]+$/.test(trimmed)
+  )
+}
+
 function decodeXtreamText(value: unknown) {
   if (typeof value !== 'string' || !value.length) {
     return ''
   }
 
+  if (!looksLikeBase64(value)) {
+    return value
+  }
+
   try {
-    return window.atob(value)
+    return decodeBase64Utf8(value)
   } catch {
     return value
   }
