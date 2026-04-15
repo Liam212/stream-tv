@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useAppStore } from '@/store/app-store'
 import {
+  getXtreamProfileCacheKey,
   getSeriesEpisodes,
   getXtreamCategories,
   getXtreamSeriesInfo,
@@ -15,14 +16,6 @@ type XtreamPageProps = {
   contentType: XtreamContentType
 }
 
-function getProfileKey(profile: ReturnType<typeof useAppStore.getState>['connectedProfile']) {
-  if (!profile) {
-    return 'disconnected'
-  }
-
-  return `${profile.baseUrl}|${profile.username}|${profile.password}|${profile.output}`
-}
-
 export function XtreamPage({ contentType }: XtreamPageProps) {
   const connectedProfile = useAppStore((state) => state.connectedProfile)
   const playXtreamStream = useAppStore((state) => state.playXtreamStream)
@@ -32,7 +25,10 @@ export function XtreamPage({ contentType }: XtreamPageProps) {
   const [selectedItem, setSelectedItem] = useState<XtreamStream | null>(null)
   const [selectedEpisodeId, setSelectedEpisodeId] = useState<number | null>(null)
 
-  const connectedProfileKey = useMemo(() => getProfileKey(connectedProfile), [connectedProfile])
+  const connectedProfileKey = useMemo(
+    () => getXtreamProfileCacheKey(connectedProfile),
+    [connectedProfile],
+  )
 
   const categoriesQuery = useQuery({
     queryKey: ['xtream', 'categories', contentType, connectedProfileKey],

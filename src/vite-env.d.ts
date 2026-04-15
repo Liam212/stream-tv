@@ -13,9 +13,13 @@ type MpegTsVideoElementProps = import('react').DetailedHTMLProps<
 
 declare global {
   interface Window {
-    ipcRenderer: import('electron').IpcRenderer
     xtreamApi: {
-      request(url: string): Promise<unknown>
+      request(payload: {
+        baseUrl: string
+        username: string
+        password: string
+        params?: Record<string, string>
+      }): Promise<unknown>
     }
   }
 }

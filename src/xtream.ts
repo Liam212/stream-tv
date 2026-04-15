@@ -91,6 +91,14 @@ const categoryMap: Record<XtreamContentType, string> = {
   series: 'get_series_categories',
 }
 
+export function getXtreamProfileCacheKey(profile: XtreamProfile | null) {
+  if (!profile) {
+    return 'disconnected'
+  }
+
+  return `${normalizeBaseUrl(profile.baseUrl)}|${profile.username.trim()}|${profile.output}`
+}
+
 export function normalizeBaseUrl(baseUrl: string) {
   return baseUrl.trim().replace(/\/+$/, '')
 }
@@ -107,29 +115,17 @@ function toArray<T>(value: unknown): T[] {
   return []
 }
 
-function createPlayerApiUrl(
-  profile: XtreamProfile,
-  params: Record<string, string>,
-) {
-  const url = new URL('player_api.php', `${normalizeBaseUrl(profile.baseUrl)}/`)
-  url.searchParams.set('username', profile.username)
-  url.searchParams.set('password', profile.password)
-
-  Object.entries(params).forEach(([key, value]) => {
-    if (value) {
-      url.searchParams.set(key, value)
-    }
-  })
-
-  return url.toString()
-}
-
 async function fetchJson<T>(
   profile: XtreamProfile,
   params: Record<string, string> = {},
 ) {
   return window.xtreamApi.request(
-    createPlayerApiUrl(profile, params),
+    {
+      baseUrl: profile.baseUrl,
+      username: profile.username,
+      password: profile.password,
+      params,
+    },
   ) as Promise<T>
 }
 

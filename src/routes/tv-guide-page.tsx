@@ -21,6 +21,7 @@ import {
 import { useAppStore } from '@/store/app-store'
 import {
   buildXtreamStreamUrl,
+  getXtreamProfileCacheKey,
   getXtreamCategories,
   getXtreamShortEpg,
   getXtreamSimpleEpg,
@@ -28,6 +29,7 @@ import {
   type XtreamEpgEntry,
   type XtreamStream,
 } from '@/xtream'
+import { toHttpUrlOrEmpty } from '@/lib/network-url'
 
 const ALL_GROUPS_ID = 'all'
 const GUIDE_WINDOW_HOURS = 4
@@ -58,16 +60,6 @@ type GuideRow = {
   epg: XtreamEpgEntry[]
   isLoading: boolean
   isError: boolean
-}
-
-function getProfileKey(
-  profile: ReturnType<typeof useAppStore.getState>['connectedProfile'],
-) {
-  if (!profile) {
-    return 'disconnected'
-  }
-
-  return `${profile.baseUrl}|${profile.username}|${profile.password}|${profile.output}`
 }
 
 function startOfTimelineWindow(date = new Date()) {
@@ -199,6 +191,7 @@ const GuideTimelineRow = memo(function GuideTimelineRow({
     () => buildGuideBlocks(row.epg, windowStartMs, windowEndMs),
     [row.epg, windowStartMs, windowEndMs],
   )
+  const streamIconUrl = toHttpUrlOrEmpty(row.channel.stream_icon ?? '')
 
   return (
     <TableRow
@@ -219,11 +212,13 @@ const GuideTimelineRow = memo(function GuideTimelineRow({
             isActive && 'border-l-2 border-amber-400 bg-amber-400/10',
           )}
           onClick={() => onPlay(row.channel)}>
-          {row.channel.stream_icon ? (
+          {streamIconUrl ? (
             <img
               className="size-10 shrink-0 rounded-md bg-muted/40 object-contain p-1 bg-gray-100"
-              src={row.channel.stream_icon}
+              src={streamIconUrl}
               alt={row.channel.name ?? row.channel.title ?? 'Channel logo'}
+              loading="lazy"
+              referrerPolicy="no-referrer"
             />
           ) : (
             <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-semibold text-muted-foreground">
@@ -335,7 +330,7 @@ export function TvGuidePage() {
   const playXtreamStream = useAppStore(state => state.playXtreamStream)
   const [selectedCategoryId, setSelectedCategoryId] = useState(ALL_GROUPS_ID)
   const connectedProfileKey = useMemo(
-    () => getProfileKey(connectedProfile),
+    () => getXtreamProfileCacheKey(connectedProfile),
     [connectedProfile],
   )
   const windowStartMs = useMemo(() => startOfTimelineWindow(), [])

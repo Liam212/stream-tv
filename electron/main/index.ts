@@ -42,19 +42,65 @@ let win: BrowserWindow | null = null
 const preload = path.join(__dirname, '../preload/index.mjs')
 const indexHtml = path.join(RENDERER_DIST, 'index.html')
 
+type XtreamRequestPayload = {
+  baseUrl: string
+  username: string
+  password: string
+  params?: Record<string, string>
+}
+
+function isHttpUrl(value: string) {
+  try {
+    const parsed = new URL(value)
+    return ['http:', 'https:'].includes(parsed.protocol)
+  } catch {
+    return false
+  }
+}
+
+function normalizeBaseUrl(baseUrl: string) {
+  return baseUrl.trim().replace(/\/+$/, '')
+}
+
+function buildXtreamPlayerApiUrl({
+  baseUrl,
+  username,
+  password,
+  params = {},
+}: XtreamRequestPayload) {
+  const normalizedBaseUrl = normalizeBaseUrl(baseUrl)
+  const url = new URL('player_api.php', `${normalizedBaseUrl}/`)
+
+  url.searchParams.set('username', username)
+  url.searchParams.set('password', password)
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value) {
+      url.searchParams.set(key, value)
+    }
+  })
+
+  return url
+}
+
+function isAllowedAppNavigation(url: string) {
+  if (VITE_DEV_SERVER_URL && url.startsWith(VITE_DEV_SERVER_URL)) {
+    return true
+  }
+
+  return url === indexHtml || url.startsWith('file://')
+}
+
 async function createWindow() {
   win = new BrowserWindow({
     title: 'Stream TV',
     icon: path.join(process.env.VITE_PUBLIC, 'icon.png'),
     webPreferences: {
       preload,
-      webSecurity: false,
-      // Warning: Enable nodeIntegration and disable contextIsolation is not secure in production
-      // nodeIntegration: true,
-
-      // Consider using contextBridge.exposeInMainWorld
-      // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
-      // contextIsolation: false,
+      sandbox: true,
+      contextIsolation: true,
+      nodeIntegration: false,
+      webSecurity: true,
     },
   })
 
@@ -66,26 +112,23 @@ async function createWindow() {
     win.loadFile(indexHtml)
   }
 
-  // Test actively push message to the Electron-Renderer
-  win.webContents.on('did-finish-load', () => {
-    win?.webContents.send('main-process-message', new Date().toLocaleString())
+  win.webContents.on('will-navigate', (event, url) => {
+    if (!isAllowedAppNavigation(url)) {
+      event.preventDefault()
+    }
   })
 
   // Make all links open with the browser, not with the application
   win.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith('https:')) shell.openExternal(url)
+    if (isHttpUrl(url)) {
+      void shell.openExternal(url)
+    }
     return { action: 'deny' }
   })
 }
 
-ipcMain.handle('xtream:request', async (_, url: string) => {
-  let parsedUrl: URL
-
-  try {
-    parsedUrl = new URL(url)
-  } catch {
-    throw new Error('Invalid Xtream URL')
-  }
+ipcMain.handle('xtream:request', async (_, payload: XtreamRequestPayload) => {
+  const parsedUrl = buildXtreamPlayerApiUrl(payload)
 
   if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
     throw new Error('Xtream requests must use http or https')
@@ -131,22 +174,5 @@ app.on('activate', () => {
     allWindows[0].focus()
   } else {
     createWindow()
-  }
-})
-
-// New window example arg: new windows url
-ipcMain.handle('open-win', (_, arg) => {
-  const childWindow = new BrowserWindow({
-    webPreferences: {
-      preload,
-      nodeIntegration: true,
-      contextIsolation: false,
-    },
-  })
-
-  if (VITE_DEV_SERVER_URL) {
-    childWindow.loadURL(`${VITE_DEV_SERVER_URL}#${arg}`)
-  } else {
-    childWindow.loadFile(indexHtml, { hash: arg })
   }
 })

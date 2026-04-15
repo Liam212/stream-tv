@@ -43,6 +43,13 @@ const defaultXtreamProfile: XtreamProfile = {
   output: 'm3u8',
 }
 
+function stripXtreamPassword(profile: XtreamProfile) {
+  return {
+    ...profile,
+    password: '',
+  }
+}
+
 export const useAppStore = create<AppStore>()(
   persist(
     (set, get) => ({
@@ -78,6 +85,7 @@ export const useAppStore = create<AppStore>()(
         set({
           connectedProfile: null,
           connectionStatus: 'Disconnected',
+          xtreamProfile: stripXtreamPassword(get().xtreamProfile),
         }),
       setPlayerAudio: ({ volume, muted }) =>
         set({
@@ -134,11 +142,10 @@ export const useAppStore = create<AppStore>()(
       name: 'stream-tv-settings',
       storage: createJSONStorage(() => window.localStorage),
       partialize: state => ({
-        streamUrl: state.streamUrl,
         playerVolume: state.playerVolume,
         playerMuted: state.playerMuted,
         experimentalFeaturesEnabled: state.experimentalFeaturesEnabled,
-        xtreamProfile: state.xtreamProfile,
+        xtreamProfile: stripXtreamPassword(state.xtreamProfile),
       }),
     },
   ),

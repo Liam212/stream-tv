@@ -124,8 +124,8 @@ export function XtreamSettingsForm() {
       <div className="notes">
         <p>{connectionStatus}</p>
         <p>
-          Settings persist in local storage. Credentials are still plain-text in
-          the renderer.
+          Server URL, username, and output persist locally. Passwords stay in
+          memory for the current session and are cleared on restart.
         </p>
       </div>
     </section>

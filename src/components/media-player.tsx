@@ -9,6 +9,7 @@ import Hls from 'hls.js'
 import { Maximize, Pause, Play, Volume2, VolumeX, X } from 'lucide-react'
 import { useFloatingPlayerDrag } from '@/hooks/use-floating-player-drag'
 import { getSourceKind } from '@/lib/player'
+import { toHttpUrlOrEmpty } from '@/lib/network-url'
 import { cn } from '@/lib/utils'
 
 type MediaElementLike = HTMLElement & {
@@ -65,8 +66,9 @@ export function MediaPlayer({
   const [volume, setVolume] = useState(1)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [showControls, setShowControls] = useState(true)
-  const sourceKind = getSourceKind(url)
-  const hasActivePlayback = url.trim().length > 0
+  const playableUrl = toHttpUrlOrEmpty(url)
+  const sourceKind = getSourceKind(playableUrl)
+  const hasActivePlayback = playableUrl.length > 0
   const normalizedPreferredVolume = Math.max(0, Math.min(1, preferredVolume))
   const isFloatingPlayer = variant === 'floating'
   const getMediaElement = () =>
@@ -180,7 +182,7 @@ export function MediaPlayer({
       media.removeEventListener('pause', syncPlaybackState)
       media.removeEventListener('volumechange', syncPlaybackState)
     }
-  }, [url, muted, sourceKind, hasActivePlayback, onAudioStateChange])
+  }, [playableUrl, muted, sourceKind, hasActivePlayback, onAudioStateChange])
 
   useEffect(() => {
     const syncFullscreenState = () => {
@@ -268,6 +270,14 @@ export function MediaPlayer({
       return
     }
 
+    if (!playableUrl) {
+      updateStatus('Only http and https stream URLs are supported')
+      setQuality('Auto')
+      setIsPlaying(false)
+      setVolume(1)
+      return
+    }
+
     setQuality('Auto')
 
     const handleLoadedMetadata = () => updateStatus('Metadata loaded')
@@ -335,7 +345,7 @@ export function MediaPlayer({
         hlsRef.current = null
       })
 
-      hls.loadSource(url)
+      hls.loadSource(playableUrl)
       hls.attachMedia(video)
     } else if (
       sourceKind === 'hls' &&
@@ -344,7 +354,7 @@ export function MediaPlayer({
       setStreamMode('Native HLS')
       setQuality('Managed natively')
       updateStatus('Using native HLS playback')
-      videoRef.current.src = url
+      videoRef.current.src = playableUrl
       syncMediaLayout()
       void videoRef.current.play().catch(() => {
         updateStatus('Stream loaded. Press play to start playback')
@@ -353,7 +363,7 @@ export function MediaPlayer({
       setStreamMode('MPEGTS.js')
       setQuality('Stream native')
       updateStatus('Loading MPEG-TS stream')
-      mpegtsRef.current!.src = url
+      mpegtsRef.current!.src = playableUrl
       syncMediaLayout()
       void mpegtsRef.current!.load()
       void mpegtsRef.current!.play().catch(() => {
@@ -363,7 +373,7 @@ export function MediaPlayer({
       setStreamMode('Native video')
       setQuality('Source native')
       updateStatus('Loading media source')
-      media.src = url
+      media.src = playableUrl
       syncMediaLayout()
       void media.play().catch(() => {
         updateStatus('Media loaded. Press play to start playback')
@@ -383,7 +393,7 @@ export function MediaPlayer({
         hlsRef.current = null
       }
     }
-  }, [url, sourceKind])
+  }, [url, playableUrl, sourceKind])
 
   const togglePlayback = () => {
     const media = getMediaElement()

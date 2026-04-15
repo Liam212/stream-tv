@@ -6,6 +6,7 @@ import { MediaPlayer } from '@/components/media-player'
 import { useAppStore } from '@/store/app-store'
 import {
   buildXtreamStreamUrl,
+  getXtreamProfileCacheKey,
   getXtreamStreams,
   type XtreamStream,
 } from '@/xtream'
@@ -69,16 +70,6 @@ const LAYOUT_PRESETS: LayoutPreset[] = [
   },
 ]
 
-function getProfileKey(
-  profile: ReturnType<typeof useAppStore.getState>['connectedProfile'],
-) {
-  if (!profile) {
-    return 'disconnected'
-  }
-
-  return `${profile.baseUrl}|${profile.username}|${profile.password}|${profile.output}`
-}
-
 function createEmptySlot(id: number): MultiViewSlot {
   return {
     id,
@@ -119,7 +110,7 @@ export function MultiViewPage() {
     fitSlotsToCount([], LAYOUT_PRESETS[0].slotCount),
   )
   const connectedProfileKey = useMemo(
-    () => getProfileKey(connectedProfile),
+    () => getXtreamProfileCacheKey(connectedProfile),
     [connectedProfile],
   )
   const selectedPreset =
