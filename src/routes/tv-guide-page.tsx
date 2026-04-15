@@ -30,6 +30,7 @@ import {
   type XtreamStream,
 } from '@/xtream'
 import { toHttpUrlOrEmpty } from '@/lib/network-url'
+import { Play } from 'lucide-react'
 
 const ALL_GROUPS_ID = 'all'
 const GUIDE_WINDOW_HOURS = 4
@@ -227,7 +228,8 @@ const GuideTimelineRow = memo(function GuideTimelineRow({
                 .toUpperCase()}
             </div>
           )}
-          <div className="min-w-0">
+          <div className="min-w-0 flex gap-2 items-center">
+            <Play size={16} className="text-amber-400" />
             <p className="truncate font-medium text-foreground">
               {row.channel.name ?? row.channel.title ?? 'Untitled'}
             </p>
