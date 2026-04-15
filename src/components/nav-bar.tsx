@@ -24,7 +24,7 @@ const navItemStyles = cva(
 )
 
 const navItems: Array<{
-  to: '/' | '/guide' | '/multiview' | '/settings'
+  to: '/' | '/multiview' | '/settings'
   label: string
   icon: LucideIcon
   experimental?: boolean
@@ -48,7 +48,7 @@ const navItems: Array<{
 ]
 
 type NavItemProps = {
-  to: '/' | '/guide' | '/multiview' | '/settings'
+  to: '/' | '/multiview' | '/settings'
   label: string
   icon: LucideIcon
 }
