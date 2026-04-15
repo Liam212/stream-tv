@@ -148,7 +148,6 @@ function buildGuideBlocks(
     .map((entry): GuideBlock | null => {
       const startMs = getEntryStartMs(entry)
       const endMs = getEntryEndMs(entry)
-
       if (
         !startMs ||
         !endMs ||
@@ -160,10 +159,17 @@ function buildGuideBlocks(
 
       const clippedStartMs = Math.max(startMs, windowStartMs)
       const clippedEndMs = Math.min(endMs, windowEndMs)
+      console.log('Entry:', entry.title, {
+        startMs,
+        endMs,
+        clippedStartMs,
+        clippedEndMs,
+      })
+
       const left = ((clippedStartMs - windowStartMs) / windowDuration) * 100
       const width = Math.max(
         ((clippedEndMs - clippedStartMs) / windowDuration) * 100,
-        8,
+        1,
       )
 
       return {
